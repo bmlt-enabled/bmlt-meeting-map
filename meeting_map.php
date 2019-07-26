@@ -484,36 +484,35 @@ if (!class_exists("BMLTMeetingMap")) {
             } else {
                 $query_string = '';
             }
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, "$root_server/client_interface/json/?switcher=GetSearchResults$query_string&sort_key=time");
-            //curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)");
-            curl_setopt($ch, CURLOPT_USERAGENT, "cURL Mozilla/5.0 (Windows NT 5.1; rv:21.0) Gecko/20130401 Firefox/21.0");
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-            curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
-            curl_setopt($ch, CURLOPT_ENCODING, 'gzip,deflate');
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            
-            $results  = curl_exec($ch);
-            // echo curl_error($ch);
-            $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $c_error  = curl_error($ch);
-            $c_errno  = curl_errno($ch);
-            curl_close($ch);
-            return $results;
+            $results = $this->get("$root_server/client_interface/json/?switcher=GetSearchResults$query_string&sort_key=time");
+            $httpcode = wp_remote_retrieve_response_code($results);
+            $response_message = wp_remote_retrieve_response_message($results);
+            if ($httpcode != 200 && $httpcode != 302 && $httpcode != 304 && !empty($response_message)) {
+                return 'Problem Connecting to Server!';
+            }
+            $body = wp_remote_retrieve_body($results);
+            return $body;
         }
         public function getAllFormats($root_server, $lang_enum)
         {
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, "$root_server/client_interface/json/?switcher=GetFormats&lang_enum=$lang_enum");
-            curl_setopt($ch, CURLOPT_USERAGENT, "cURL Mozilla/5.0 (Windows NT 5.1; rv:21.0) Gecko/20130401 Firefox/21.0");
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-            curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
-            curl_setopt($ch, CURLOPT_ENCODING, 'gzip,deflate');
-            $formats = curl_exec($ch);
-            curl_close($ch);
-            return $formats;
+            $results = $this->get("$root_server/client_interface/json/?switcher=GetFormats&lang_enum=$lang_enum");
+            $httpcode = wp_remote_retrieve_response_code($results);
+            $response_message = wp_remote_retrieve_response_message($results);
+            if ($httpcode != 200 && $httpcode != 302 && $httpcode != 304 && !empty($response_message)) {
+                return 'Problem Connecting to Server!';
+            }
+            $body = wp_remote_retrieve_body($results);
+            return $body;
+        }
+        public function get($url, $cookies = null)
+        {
+            $args = array(
+                'timeout' => '120',
+                'headers' => array(
+                    'User-Agent' => 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0) +BmltMeetingMap'
+                )
+            );
+            return wp_remote_get($url, $args);
         }
     }
     //End Class BMLTmaps
