@@ -802,7 +802,7 @@ function MeetingMap (
     			langFormats.push(format);
     		} else if (format.format_type_enum=='FC2' || format.format_type_enum=='FC3') {
     			mainFormats.push(format);
-    		} else if (format.format_type_enum=='O-*') {
+    		} else if (format.format_type_enum=='O') {
     			openFormat = format;
     		}
     	}
