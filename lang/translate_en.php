@@ -25,4 +25,3 @@ $translate = array (
     Find_Meetings                   =>  "Find Meetings",
     Go                              =>  "Go!"
 );
-?>
