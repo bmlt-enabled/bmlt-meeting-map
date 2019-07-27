@@ -19,4 +19,3 @@ $translate = array (
     NO_MEETINGS                     =>  "Keine Meetings gefunden",
     SERVER_FAIL                     =>  "Server down oder nicht erreichbar"
 );
-?>

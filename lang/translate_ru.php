@@ -12,4 +12,3 @@ $translate = array (
     'Info'                          =>  'Info'
     
 );
-?>
