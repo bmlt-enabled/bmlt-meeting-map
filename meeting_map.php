@@ -170,8 +170,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 $this->options['lat'] = $_POST['lat'];
                 $this->options['lng'] = $_POST['lng'];
                 $this->options['zoom'] = $_POST['zoom'];
-                $this->options['url_of_pdf'] = $_POST['url_of_pdf'];
-                $this->options['url_of_tabbed'] = $_POST['url_of_pdf'];
+                $this->options['time_format'] = $_POST['time_format'];
                 $this->save_admin_options();
                 set_transient('admin_notice', 'Please put down your weapon. You have 20 seconds to comply.');
                 echo '<div class="updated"><p>Success! Your changes were successfully saved!</p></div>';
@@ -230,11 +229,14 @@ if (!class_exists("BMLTMeetingMap")) {
                         </ul>
                     </div>
                     <div style="padding: 0 15px;" class="postbox">
-                        <h3>Further Processing of Meetings</h3>
+                        <h3>Internalization</h3>
                         <ul>
                             <li>
-                                <label for="url_of_pdf">URL of PDF: </label>
-                                <input id="url_of_pdf" type="text" size="100" name="url_of_pdf" value="<?php echo $this->options['url_of_pdf']; ?>" />
+                                <label for="time_format">Time Format: </label>
+                                <select id="time_format" name="time_format" >
+                                    <option value="12" <?php ( '12' == $this->options['time_format'] ? 'selected' : '' )  ?>>12 Hour (e.g. 1:30pm)</option>
+                                    <option value="24" <?php ( '24' == $this->options['time_format'] ? 'selected' : '' )  ?>>24 Hour (e.g. 13:30pm)</option>
+                                </select>
                             </li>
                         </ul>
                     </div>
@@ -318,6 +320,9 @@ if (!class_exists("BMLTMeetingMap")) {
             }
             if (!isset($this->options['zoom']) || trim($this->options['zoom'])=='') {
                 $this->options['zoom'] = 12;
+            }
+            if (!isset($this->options['time_format'])) {
+                $this->options['time_format'] = '24';
             }
             extract($att = shortcode_atts(array(
                 'lat' => $this->options['lat'],
@@ -456,6 +461,7 @@ if (!class_exists("BMLTMeetingMap")) {
             $ret .= "var c_g_BMLTPlugin_throbber_img_src = '".htmlspecialchars($this->get_plugin_path()."/google_map_images/Throbber.gif")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
             $ret .= 'var c_g_map_link_text = "'.htmlspecialchars($translate['OPEN_GOOGLE']).'";';
             $ret .= 'var c_g_region = "'.$region.'";';
+            $ret .= 'var c_g_time_format = "'.$this->options['time_format'].'";';
             
             $ret .= '</script>';
             $ret .= '<style type="text/css">.onoffswitch-inner:before {

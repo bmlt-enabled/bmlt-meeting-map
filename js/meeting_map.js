@@ -458,8 +458,16 @@ function MeetingMap (
 				       marker_html, marker_title );
 	};
 	function getDayAndTime( in_meeting_obj ) {
-		var	time = in_meeting_obj.start_time.toString().split(':');
-		return c_g_weekdays[in_meeting_obj.weekday_tinyint]+" "+time[0]+':'+time[1];
+		return c_g_weekdays[in_meeting_obj.weekday_tinyint]+" "+formattedTime(in_meeting_obj.start_time);
+	}
+	function formattedTime( in_time ) {
+		var	time = in_time.toString().split(':');
+		if (c_g_time_format == '12') {
+			var h = time[0] % 12 || 12;
+			var ampm = (time[0] < 12 || time[0] === 24) ? "AM" : "PM";
+			return h+':'+time[1]+ampm;
+		}
+		return time[0]+':'+time[1];
 	}
 	function getLangs( in_meeting_obj ) {
 		var ret = '';
@@ -1036,7 +1044,7 @@ function MeetingMap (
 	    var startDate = new Date (new Date().toDateString() + ' ' + meeting.start_time);
 	    var endDate = new Date(startDate.getTime()+minutes*60000);
 	    var startTimeSplit = meeting.start_time.split(':');
-	    var startTime = startTimeSplit[0]+':'+startTimeSplit[1];
+	    var startTime = formattedTime(meeting.start_time);
 	    var endTime = ''+endDate.getHours()+':';
 	    if (endDate.getMinutes()==0) {
 	    	endTime += '00';
@@ -1044,7 +1052,8 @@ function MeetingMap (
 	    	endTime += '0'+endDate.getMinutes();
 	    } else {
 	    	endTime += endDate.getMinutes();
-	    }
+		}
+		endTime = formattedTime(endTime);
 	    return startTime+ "&nbsp;-&nbsp;" + endTime;
     }
     function meetingDayAndTimes(meeting) {
