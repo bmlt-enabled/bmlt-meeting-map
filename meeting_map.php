@@ -242,6 +242,42 @@ if (!class_exists("BMLTMeetingMap")) {
                     </div>
                     <input type="submit" value="SAVE CHANGES" name="bmltmapssave" class="button-primary" />                 
                 </form>
+                <h2>Instructions</h2>
+				<p> Please join us on Facebook!  In the group <a href="http://www.facebook.com/groups/bmltapp">Basic Meeting List Toolbox</a> you'll
+                find a community to support you, including the authors of this plugin.</p>
+                <p> The shortcode <code>[bmlt_meeting_map]</code> can be embedded on any page, and
+                its initial location, zoom factor, etc., will be as defined on this
+                page.  Additionally, its behavior can be modified by including parameters
+                in the shortcode, or in the query string of the URL.  
+				<div id="accordion">
+					<h3 class="help-accordian"><strong>Shortcode Parameters</strong></h3>
+					<div>
+                        <p><code>lat,lng,zoom</code> - Specify the latitude, longitude, and zoom factor of the map.<br>Example:
+                        <code>[bmlt_meeting_map lat="" lng="" zoom=""]</code>
+                        <p><code>lang_enum</code> - Specify the language for format desciptions and weekdays.  Use standard 2-character abbrieviations, e.g. 'en' for English, 'de' for German.
+                        <p><code>query_string</code> - Restrict the meetings on the map 
+                        to those matching any criteria that can be expressed as a BMLT query.  Use the 
+                        BMLT Semantic Workshop to find legal queries.
+                        <p><code>center_me</code> - Set to a non-zero value to obtain the user's location,
+                        and use that to center the meeting map.
+                        <p><code>goto</code> - Use Google geocoding to find the location.  May be either the name of a city 
+                        or a zip code.<br>Example:
+                        <code>[bmlt_meeting_map goto="Hamburg"]</code>
+				    </div>
+					<h3 class="help-accordian"><strong>URL Query String Parameters</strong></h3>
+					<div>
+                        <p>Having the map location parameters in the URL allows sites
+                        to have a form asking for the location on one page (or in a widget that
+                        appears on all pages) whose submission brings the user to a properly
+                        configured meeting map.
+                        <p><code>goto</code> - Use Google geocoding to find the location.  May be either the name of a city 
+                        or a zip code.<br>Example:
+                        <code>http://mysite.org/meeting-map-page?goto="Hamburg"</code>
+                        <p><code>gotoMe</code> -  - Set to a non-zero value to obtain the user's location,
+                        and use that to center the meeting map.<br>Example:
+                        <code>http://mysite.org/meeting-map-page?gotoMe="1"</code>
+					</div>
+                </div>
             </div>
             <script>
             getValueSelected();
