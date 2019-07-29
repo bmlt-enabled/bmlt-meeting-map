@@ -182,9 +182,9 @@ if (!class_exists("BMLTMeetingMap")) {
                     <?php wp_nonce_field('bmltmapupdate-options'); ?>
                     <?php $this_connected = $this->testRootServer($this->options['root_server']); ?>
                     <?php $connect = "<p><div style='color: #f00;font-size: 16px;vertical-align: text-top;' class='dashicons dashicons-no'></div><span style='color: #f00;'>Connection to Root Server Failed.  Check spelling or try again.  If you are certain spelling is correct, Root Server could be down.</span></p>"; ?>
-                    <?php if ($this_connected != false) { 
+                    <?php if ($this_connected != false) {
                         $versionString = simplexml_load_string($this_connected)->serverVersion->readableString;
-                        $versionParts = explode('.',$versionString);
+                        $versionParts = explode('.', $versionString);
                         if (intval($versionParts[0])*100+intval($versionParts[1]) < intval(213)) {
                             $connect = "<span style='color: #f00;'><div style='font-size: 16px;vertical-align: text-top;' class='dashicons dashicons-no'></div>Version ".$this_connected." -- Requires at least 2.13</span>";
                         } else {
@@ -445,12 +445,12 @@ if (!class_exists("BMLTMeetingMap")) {
                     ob_flush();
                     flush();
                     $this_connected = $this->testRootServer($this->options['root_server']);
-                    if ($this_connected == false) { 
+                    if ($this_connected == false) {
                         echo "<h1>Could not connect to BMLT Server: ".$this->options['root_server']."</h1>";
                         return;
                     } else {
                         $versionString = simplexml_load_string($this_connected)->serverVersion->readableString;
-                        $versionParts = explode('.',$versionString);
+                        $versionParts = explode('.', $versionString);
                         if (intval($versionParts[0])*100+intval($versionParts[1]) < intval(213)) {
                             echo "<h1>BMLT Server: ".$this->options['root_server']." has incompatible version ".$versionString.". The meeeting map requires at least 2.13</h1>";
                             return;
