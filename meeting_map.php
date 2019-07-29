@@ -182,10 +182,16 @@ if (!class_exists("BMLTMeetingMap")) {
                     <?php wp_nonce_field('bmltmapupdate-options'); ?>
                     <?php $this_connected = $this->testRootServer($this->options['root_server']); ?>
                     <?php $connect = "<p><div style='color: #f00;font-size: 16px;vertical-align: text-top;' class='dashicons dashicons-no'></div><span style='color: #f00;'>Connection to Root Server Failed.  Check spelling or try again.  If you are certain spelling is correct, Root Server could be down.</span></p>"; ?>
-                    <?php if ($this_connected != false) { ?>
-                        <?php $connect = "<span style='color: #00AD00;'><div style='font-size: 16px;vertical-align: text-top;' class='dashicons dashicons-smiley'></div>Version ".$this_connected."</span>"?>
-                        <?php $this_connected = true; ?>
-                    <?php } ?>
+                    <?php if ($this_connected != false) { 
+                        $versionString = simplexml_load_string($this_connected)->serverVersion->readableString;
+                        $versionParts = explode('.',$versionString);
+                        if (intval($versionParts[0])*100+intval($versionParts[1]) < intval(213)) {
+                            $connect = "<span style='color: #f00;'><div style='font-size: 16px;vertical-align: text-top;' class='dashicons dashicons-no'></div>Version ".$this_connected." -- Requires at least 2.13</span>";
+                        } else {
+                            $connect = "<span style='color: #00AD00;'><div style='font-size: 16px;vertical-align: text-top;' class='dashicons dashicons-smiley'></div>Version ".$this_connected."</span>";
+                            $this_connected = true;
+                        }
+                    } ?>
                     <div style="margin-top: 20px; padding: 0 15px;" class="postbox">
                         <h3>BMLT Root Server URL</h3>
                         <p>Example: http://narcotics-anonymous.de/bmlt</p>
@@ -438,6 +444,18 @@ if (!class_exists("BMLTMeetingMap")) {
                 add_action('wp_footer', function () use ($root_server, $query_string, $center_me, $goto, $lang_enum) {
                     ob_flush();
                     flush();
+                    $this_connected = $this->testRootServer($this->options['root_server']);
+                    if ($this_connected == false) { 
+                        echo "<h1>Could not connect to BMLT Server: ".$this->options['root_server']."</h1>";
+                        return;
+                    } else {
+                        $versionString = simplexml_load_string($this_connected)->serverVersion->readableString;
+                        $versionParts = explode('.',$versionString);
+                        if (intval($versionParts[0])*100+intval($versionParts[1]) < intval(213)) {
+                            echo "<h1>BMLT Server: ".$this->options['root_server']." has incompatible version ".$versionString.". The meeeting map requires at least 2.13</h1>";
+                            return;
+                        }
+                    }
                     $footer_content = '<div style="display:none;">';
                     $footer_content .= '<script type="text/javascript">c_mm.loadAllMeetingsExt(';
                     $footer_content .=  $this->getAllMeetings($root_server, $query_string).",";
