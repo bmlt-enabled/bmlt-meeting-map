@@ -685,7 +685,6 @@ function MeetingMap (
 					new google.maps.LatLng(c_g_bounds.south, c_g_bounds.west), 
 					new google.maps.LatLng(c_g_bounds.north, c_g_bounds.east));
 			}
-			console.log(geoCodeParams);
 			var	status = geocoder.geocode ( geoCodeParams, geoCallback );
 
 			if ( google.maps.OK != status )
