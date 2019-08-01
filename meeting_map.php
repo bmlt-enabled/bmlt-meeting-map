@@ -215,13 +215,13 @@ if (!class_exists("BMLTMeetingMap")) {
                                 <input id="api_key" type="text" size="40" name="api_key" value="<?php echo $this->options['api_key']; ?>" />
                             </li>
                             <li>
-                                <label for="region_bias">Google Region: </label>
+                                <label for="region_bias">Google Region (optional): </label>
                                 <input id="region_bias" type="text" size="2" name="region_bias" value="<?php echo $this->options['region_bias']; ?>" />
                             </li>
                             <li>
                             <table>
                             <tr>
-                            <td>Geolocation Bounds</td>
+                            <td>Geolocation Bounds (optional)</td>
                             <td>
                                 <label for="bounds_north">North: </label>
                                 <input id="bounds_north" type="text" size="8" name="bounds_north" value="<?php echo $this->options['bounds_north']; ?>" />
@@ -281,11 +281,12 @@ if (!class_exists("BMLTMeetingMap")) {
                     <h3 class="help-accordian"><strong>Shortcode Parameters</strong></h3>
                     <div>
                         <p><code>lat,lng,zoom</code> - Specify the latitude, longitude, and zoom factor of the map.<br>Example:
-                        <code>[bmlt_meeting_map lat="" lng="" zoom=""]</code>
+                        <code>[bmlt_meeting_map lat="52.533849" lng="13.418893" zoom="12"]</code>
                         <p><code>lang_enum</code> - Specify the language for format desciptions and weekdays.  Use standard 2-character abbrieviations, e.g. 'en' for English, 'de' for German.
                         <p><code>query_string</code> - Restrict the meetings on the map 
                         to those matching any criteria that can be expressed as a BMLT query.  Use the 
-                        BMLT Semantic Workshop to find legal queries.
+                        BMLT Semantic Workshop to find legal queries.<br>Example:
+                        <code>[bmlt_meeting_map query_string="&formats=192"]</code>
                         <p><code>center_me</code> - Set to a non-zero value to obtain the user's location,
                         and use that to center the meeting map.
                         <p><code>goto</code> - Use Google geocoding to find the location.  May be either the name of a city 
