@@ -167,6 +167,10 @@ if (!class_exists("BMLTMeetingMap")) {
                 $this->options['root_server']    = $_POST['root_server'];
                 $this->options['api_key'] = $_POST['api_key'];
                 $this->options['region_bias'] = $_POST['region_bias'];
+                $this->options['bounds_north'] = $_POST['bounds_north'];
+                $this->options['bounds_south'] = $_POST['bounds_south'];
+                $this->options['bounds_east'] = $_POST['bounds_east'];
+                $this->options['bounds_west'] = $_POST['bounds_west'];
                 $this->options['lat'] = $_POST['lat'];
                 $this->options['lng'] = $_POST['lng'];
                 $this->options['zoom'] = $_POST['zoom'];
@@ -211,8 +215,26 @@ if (!class_exists("BMLTMeetingMap")) {
                                 <input id="api_key" type="text" size="40" name="api_key" value="<?php echo $this->options['api_key']; ?>" />
                             </li>
                             <li>
-                                <label for="region_bias">Google Region: </label>
+                                <label for="region_bias">Google Region (optional): </label>
                                 <input id="region_bias" type="text" size="2" name="region_bias" value="<?php echo $this->options['region_bias']; ?>" />
+                            </li>
+                            <li>
+                            <table>
+                            <tr>
+                            <td>Geolocation Bounds (optional)</td>
+                            <td>
+                                <label for="bounds_north">North: </label>
+                                <input id="bounds_north" type="text" size="8" name="bounds_north" value="<?php echo $this->options['bounds_north']; ?>" />
+                                <label for="bounds_east">East: </label>
+                                <input id="bounds_east" type="text" size="8" name="bounds_east" value="<?php echo $this->options['bounds_east']; ?>" />
+                                <br>
+                                <label for="bounds_south">South: </label>
+                                <input id="bounds_south" type="text" size="8" name="bounds_south" value="<?php echo $this->options['bounds_south']; ?>" />
+                                <label for="bounds_west">West: </label>
+                                <input id="bounds_west" type="text" size="8" name="bounds_west" value="<?php echo $this->options['bounds_west']; ?>" />
+                             </td>
+                            </tr>
+                            </table>
                             </li>
                         </ul>
                     </div>
@@ -259,11 +281,12 @@ if (!class_exists("BMLTMeetingMap")) {
                     <h3 class="help-accordian"><strong>Shortcode Parameters</strong></h3>
                     <div>
                         <p><code>lat,lng,zoom</code> - Specify the latitude, longitude, and zoom factor of the map.<br>Example:
-                        <code>[bmlt_meeting_map lat="" lng="" zoom=""]</code>
+                        <code>[bmlt_meeting_map lat="52.533849" lng="13.418893" zoom="12"]</code>
                         <p><code>lang_enum</code> - Specify the language for format desciptions and weekdays.  Use standard 2-character abbrieviations, e.g. 'en' for English, 'de' for German.
                         <p><code>query_string</code> - Restrict the meetings on the map 
                         to those matching any criteria that can be expressed as a BMLT query.  Use the 
-                        BMLT Semantic Workshop to find legal queries.
+                        BMLT Semantic Workshop to find legal queries.<br>Example:
+                        <code>[bmlt_meeting_map query_string="&formats=192"]</code>
                         <p><code>center_me</code> - Set to a non-zero value to obtain the user's location,
                         and use that to center the meeting map.
                         <p><code>goto</code> - Use Google geocoding to find the location.  May be either the name of a city 
@@ -514,7 +537,13 @@ if (!class_exists("BMLTMeetingMap")) {
             $ret .= "var c_g_BMLTPlugin_lang_dir = '".htmlspecialchars($this->get_plugin_path()."/lang")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
             $ret .= "var c_g_BMLTPlugin_throbber_img_src = '".htmlspecialchars($this->get_plugin_path()."/google_map_images/Throbber.gif")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
             $ret .= 'var c_g_map_link_text = "'.htmlspecialchars($translate['OPEN_GOOGLE']).'";';
-            $ret .= 'var c_g_region = "'.$region.'";';
+            $ret .= 'var c_g_region = "'.$options['region_bias'].'";';
+            $ret .= 'var c_g_bounds = {';
+                $ret .= ' "north": "'.$this->options['bounds_north'].'",';
+                $ret .= ' "east": "'.$this->options['bounds_east'].'",';
+                $ret .= ' "south": "'.$this->options['bounds_south'].'",';
+                $ret .= ' "west": "'.$this->options['bounds_west'].'"';
+            $ret .= '};';
             $ret .= 'var c_g_time_format = "'.$this->options['time_format'].'";';
             
             $ret .= '</script>';

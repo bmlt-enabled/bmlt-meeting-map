@@ -672,7 +672,20 @@ function MeetingMap (
 
 		if ( geocoder )
 		{
-			var	status = geocoder.geocode ( { 'address': in_loc, 'region':c_g_region }, geoCallback );
+			var geoCodeParams = { 'address': in_loc };
+			if (c_g_region.trim() !== '') {
+				geoCodeParams.region = c_g_region;
+			}
+			if (c_g_bounds
+			&&  c_g_bounds.north && c_g_bounds.north.trim()!== ''
+			&&  c_g_bounds.east && c_g_bounds.east.trim()!== ''
+			&&  c_g_bounds.south && c_g_bounds.south.trim()!== ''
+			&&  c_g_bounds.west && c_g_bounds.west.trim()!== '') {
+				geoCodeParams.bounds = new google.maps.LatLngBounds(
+					new google.maps.LatLng(c_g_bounds.south, c_g_bounds.west), 
+					new google.maps.LatLng(c_g_bounds.north, c_g_bounds.east));
+			}
+			var	status = geocoder.geocode ( geoCodeParams, geoCallback );
 
 			if ( google.maps.OK != status )
 			{
