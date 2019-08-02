@@ -1,20 +1,19 @@
-=== BMLT Tabbed UI ===  
+=== BMLT Meeting Map ===  
 
-Contributors: Jack S
+Contributors: Ron B
 
 Tags: na, meeting list, meeting finder, maps, recovery, addiction, webservant, bmlt
 
-Requires at least: 3.6
+Requires at least: 5.1
 
-Tested up to: 4.6.1
+Tested up to: 5.2
 
-Stable tag: 6.0.14
+Stable tag: 1.0.0
 
-BMLT Tabbed UI implements a Tabbed UI for BMLT.
 
 == Description ==
 
-This plugin provides a GoogleMaps UI allowing users to find meetings stored in a the Basic Meeting List Toolbox (BMLT) Server.
+The BMLT Meeting Map provides a GoogleMaps UI allowing users to find meetings stored in a the Basic Meeting List Toolbox (BMLT) Server.
 Simply put the shortcode [bmlt_meeting_map] into a Wordpress page and a map will be generated where nearby meetings are marked.
 Click on a meeting location, and the details of all the meetings will pop up.  The display is responsive, suitible for mobile and
 computers.  Panning (or zooming) in the map displays meeting there, or you may search for a different location using geocoding.
