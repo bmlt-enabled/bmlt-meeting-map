@@ -82,7 +82,7 @@ if (!class_exists("BMLTMeetingMap")) {
         {
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
             if ($hook == 'settings_page_meeting_map') {
-                wp_enqueue_style('meeting-map-admin-ui-css', 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css', false, '1.11.4', false);
+                wp_enqueue_style('meeting-map-admin-ui-css',  plugin_dir_url(__FILE__) . "css/jquery-ui.css", false, '1.11.4', false);
                 wp_register_script('meeting-map-admin', plugins_url('js/meeting_map_admin.js', __FILE__), array('jquery'), '6.0', false);
                 wp_enqueue_script('meeting-map-admin');
                 wp_enqueue_script('common');
@@ -96,34 +96,23 @@ if (!class_exists("BMLTMeetingMap")) {
         {
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
             if ($this->has_shortcode()) {
-                wp_enqueue_style("meeting_map-select2", plugin_dir_url(__FILE__) . "css/select2.min.css", false, filemtime(plugin_dir_path(__FILE__) . "css/select2.min.css"), false);
-                wp_enqueue_style("meeting_map-bootstrap", plugin_dir_url(__FILE__) . "css/bootstrap.min.css", false, filemtime(plugin_dir_path(__FILE__) . "css/bootstrap.min.css"), false);
                 wp_enqueue_style("snazzy-info-window", plugin_dir_url(__FILE__) . "css/snazzy-info-window.min.css", false, filemtime(plugin_dir_path(__FILE__) . "css/snazzy-info-window.min.css"), false);
                 wp_enqueue_style("meeting_map", plugin_dir_url(__FILE__) . "css/meeting_map.css", false, filemtime(plugin_dir_path(__FILE__) . "css/meeting_map.css"), false);
                 wp_enqueue_script("meeting_map-bootstrap", plugin_dir_url(__FILE__) . "js/bootstrap.min.js", array('jquery'), filemtime(plugin_dir_path(__FILE__) . "js/bootstrap.min.js"), true);
-                wp_enqueue_script("meeting_map-select2", plugin_dir_url(__FILE__) . "js/select2.full.min.js", array('jquery'), filemtime(plugin_dir_path(__FILE__) . "js/select2.full.min.js"), true);
                 wp_enqueue_script("snazzy-info-window", plugin_dir_url(__FILE__) . "js/snazzy-info-window.min.js", false, filemtime(plugin_dir_path(__FILE__) . "js/snazzy-info-window.min.js"), true);
                 wp_enqueue_script("meeting_map", plugin_dir_url(__FILE__) . "js/meeting_map.js", array('jquery'), filemtime(plugin_dir_path(__FILE__) . "js/meeting_map.js"), false);
             }
         }
         public function testRootServer($root_server)
         {
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, "$root_server/client_interface/serverInfo.xml");
-            curl_setopt($ch, CURLOPT_USERAGENT, "cURL Mozilla/5.0 (Windows NT 5.1; rv:21.0) Gecko/20130401 Firefox/21.0");
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-            curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
-            curl_setopt($ch, CURLOPT_ENCODING, 'gzip,deflate');
-            $results  = curl_exec($ch);
-            $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $c_error  = curl_error($ch);
-            $c_errno  = curl_errno($ch);
-            curl_close($ch);
-            if ($httpcode != 200 && $httpcode != 302 && $httpcode != 304) {
+            $results = $this->get("$root_server/client_interface/serverInfo.xml");
+            $httpcode = wp_remote_retrieve_response_code($results);
+            $response_message = wp_remote_retrieve_response_message($results);
+            if ($httpcode != 200 && $httpcode != 302 && $httpcode != 304 && !empty($response_message)) {
                 return false;
             }
-            return $results;
+            $body = wp_remote_retrieve_body($results);
+            return $body;
         }
         public function doQuit($message = '')
         {
@@ -157,24 +146,21 @@ if (!class_exists("BMLTMeetingMap")) {
         public function admin_options_page()
         {
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-            if (!isset($_POST['bmltmapssave'])) {
-                $_POST['bmltmapssave'] = false;
-            }
-            if ($_POST['bmltmapssave']) {
+            if (isset($_POST['bmltmapssave']) && boolval($_POST['bmltmapssave'])) {
                 if (!wp_verify_nonce($_POST['_wpnonce'], 'bmltmapupdate-options')) {
                     die('Whoops! There was a problem with the data you posted. Please go back and try again.');
                 }
-                $this->options['root_server']    = $_POST['root_server'];
-                $this->options['api_key'] = $_POST['api_key'];
-                $this->options['region_bias'] = $_POST['region_bias'];
-                $this->options['bounds_north'] = $_POST['bounds_north'];
-                $this->options['bounds_south'] = $_POST['bounds_south'];
-                $this->options['bounds_east'] = $_POST['bounds_east'];
-                $this->options['bounds_west'] = $_POST['bounds_west'];
-                $this->options['lat'] = $_POST['lat'];
-                $this->options['lng'] = $_POST['lng'];
-                $this->options['zoom'] = $_POST['zoom'];
-                $this->options['time_format'] = $_POST['time_format'];
+                $this->options['root_server'] = validate_url($_POST['root_server']);
+                $this->options['api_key'] = sanitize_text_field($_POST['api_key']);
+                $this->options['region_bias'] = sanitize_text_field($_POST['region_bias']);
+                $this->options['bounds_north'] = floatval($_POST['bounds_north']);
+                $this->options['bounds_south'] = floatval($_POST['bounds_south']);
+                $this->options['bounds_east'] = floatval($_POST['bounds_east']);
+                $this->options['bounds_west'] = floatval($_POST['bounds_west']);
+                $this->options['lat'] = floatval($_POST['lat']);
+                $this->options['lng'] = floatval($_POST['lng']);
+                $this->options['zoom'] = intval($_POST['zoom']);
+                $this->options['time_format'] = intval($_POST['time_format']);
                 $this->save_admin_options();
                 set_transient('admin_notice', 'Please put down your weapon. You have 20 seconds to comply.');
                 echo '<div class="updated"><p>Success! Your changes were successfully saved!</p></div>';
@@ -398,12 +384,14 @@ if (!class_exists("BMLTMeetingMap")) {
                 'center_me' => 0,
                 'goto' => ''
             ), $att, 'bmlt_meeting_map'));
-            if ($_GET['gotoMe']!='' && $_GET['gotoMe']!='0') {
+            $gotomeTmp = sanitize_text_field($_GET['gotoMe']);
+            if ($gotomeTmp!='' && $gotomeTmp!='0') {
                 $center_me = 1;
                 $goto = '';
             }
-            if ($_GET['goto']!='') {
-                $goto = $_GET['goto'];
+            $gotoTmp = sanitize_text_field($_GET['goto']);
+            if ($gotoTmp!='') {
+                $goto = $gotoTmp;
                 $center_me = 0;
             }
             include(dirname(__FILE__)."/lang/translate_".$lang_enum.".php");

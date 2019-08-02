@@ -824,6 +824,8 @@ function MeetingMap (
     		} else if (format.format_type_enum=='FC2' || format.format_type_enum=='FC3') {
     			mainFormats.push(format);
     		} else if (format.format_type_enum=='O') {
+				openFormat = format;
+			} else if (format.format_type_enum.length > 1 && format.format_type_enum.substr(0,1)=='O') {
     			openFormat = format;
     		}
     	}
