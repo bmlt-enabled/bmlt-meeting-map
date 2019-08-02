@@ -82,7 +82,7 @@ if (!class_exists("BMLTMeetingMap")) {
         {
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
             if ($hook == 'settings_page_meeting_map') {
-                wp_enqueue_style('meeting-map-admin-ui-css',  plugin_dir_url(__FILE__) . "css/jquery-ui.css", false, '1.11.4', false);
+                wp_enqueue_style('meeting-map-admin-ui-css', plugin_dir_url(__FILE__) . "css/jquery-ui.css", false, '1.11.4', false);
                 wp_register_script('meeting-map-admin', plugins_url('js/meeting_map_admin.js', __FILE__), array('jquery'), '6.0', false);
                 wp_enqueue_script('meeting-map-admin');
                 wp_enqueue_script('common');
