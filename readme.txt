@@ -1,6 +1,6 @@
 === BMLT Meeting Map ===  
 
-Contributors: Ron B
+Contributors: otrok7
 
 Tags: na, meeting list, meeting finder, maps, recovery, addiction, webservant, bmlt
 
