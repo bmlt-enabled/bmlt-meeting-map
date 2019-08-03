@@ -153,10 +153,10 @@ if (!class_exists("BMLTMeetingMap")) {
                 $this->options['root_server'] = validate_url($_POST['root_server']);
                 $this->options['api_key'] = sanitize_text_field($_POST['api_key']);
                 $this->options['region_bias'] = sanitize_text_field($_POST['region_bias']);
-                $this->options['bounds_north'] = floatval($_POST['bounds_north']);
-                $this->options['bounds_south'] = floatval($_POST['bounds_south']);
-                $this->options['bounds_east'] = floatval($_POST['bounds_east']);
-                $this->options['bounds_west'] = floatval($_POST['bounds_west']);
+                $this->options['bounds_north'] = sanitize_text_field($_POST['bounds_north']);
+                $this->options['bounds_south'] = sanitize_text_field($_POST['bounds_south']);
+                $this->options['bounds_east'] = sanitize_text_field($_POST['bounds_east']);
+                $this->options['bounds_west'] = sanitize_text_field($_POST['bounds_west']);
                 $this->options['lat'] = floatval($_POST['lat']);
                 $this->options['lng'] = floatval($_POST['lng']);
                 $this->options['zoom'] = intval($_POST['zoom']);
@@ -243,13 +243,13 @@ if (!class_exists("BMLTMeetingMap")) {
                         </ul>
                     </div>
                     <div style="padding: 0 15px;" class="postbox">
-                        <h3>Internalization</h3>
+                        <h3>Internationalization</h3>
                         <ul>
                             <li>
                                 <label for="time_format">Time Format: </label>
                                 <select id="time_format" name="time_format" >
-                                    <option value="12" <?php ( '12' == $this->options['time_format'] ? 'selected' : '' )  ?>>12 Hour (e.g. 1:30pm)</option>
-                                    <option value="24" <?php ( '24' == $this->options['time_format'] ? 'selected' : '' )  ?>>24 Hour (e.g. 13:30pm)</option>
+                                    <option value="12" <?php echo ( 12 == $this->options['time_format'] ? 'selected' : '' )  ?>>12 Hour (e.g. 1:30pm)</option>
+                                    <option value="24" <?php echo ( 24 == $this->options['time_format'] ? 'selected' : '' )  ?>>24 Hour (e.g. 13:30)</option>
                                 </select>
                             </li>
                         </ul>
@@ -373,7 +373,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 $this->options['zoom'] = 12;
             }
             if (!isset($this->options['time_format'])) {
-                $this->options['time_format'] = '24';
+                $this->options['time_format'] = 24;
             }
             extract($att = shortcode_atts(array(
                 'lat' => $this->options['lat'],
