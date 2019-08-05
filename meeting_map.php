@@ -80,11 +80,6 @@ if (!class_exists("BMLTMeetingMap")) {
         // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
         public function enqueue_backend_files($hook)
         {
-            // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-            if ($hook == 'settings_page_meeting_map') {
-                wp_register_script('meeting-map-admin', plugins_url('js/meeting_map_admin.js', __FILE__), array('jquery'), '6.0', false);
-                wp_enqueue_script('meeting-map-admin');
-            }
         }
         /**
          * @desc Adds JS/CSS to the header
@@ -97,7 +92,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 wp_enqueue_style("snazzy-info-window", plugin_dir_url(__FILE__) . "css/snazzy-info-window.min.css", false, filemtime(plugin_dir_path(__FILE__) . "css/snazzy-info-window.min.css"), false);
                 wp_enqueue_style("meeting_map", plugin_dir_url(__FILE__) . "css/meeting_map.css", false, filemtime(plugin_dir_path(__FILE__) . "css/meeting_map.css"), false);
                 wp_enqueue_script("snazzy-info-window", plugin_dir_url(__FILE__) . "js/snazzy-info-window.min.js", false, filemtime(plugin_dir_path(__FILE__) . "js/snazzy-info-window.min.js"), true);
-                wp_enqueue_script("meeting_map", plugin_dir_url(__FILE__) . "js/meeting_map.js", array('jquery'), filemtime(plugin_dir_path(__FILE__) . "js/meeting_map.js"), false);
+                wp_enqueue_script("meeting_map", plugin_dir_url(__FILE__) . "js/meeting_map.js", false, filemtime(plugin_dir_path(__FILE__) . "js/meeting_map.js"), false);
             }
         }
         public function testRootServer($root_server)
