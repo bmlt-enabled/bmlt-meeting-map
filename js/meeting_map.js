@@ -825,7 +825,7 @@ function MeetingMap (
     			mainFormats.push(format);
     		} else if (format.format_type_enum=='O') {
 				openFormat = format;
-			} else if (format.format_type_enum.length > 1 && format.format_type_enum.substr(0,1)=='O') {
+			} else if (format.format_type_enum.length > 1 && format.format_type_enum=='O-*') {
     			openFormat = format;
     		}
     	}
