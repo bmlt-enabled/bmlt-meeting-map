@@ -3,7 +3,7 @@
 Plugin Name: BMLT Meeting Map
 Description: Simple responsive Meeting Map.
 Author: Ron B
-Version: 1.0.1
+Version: 1.0.3
 */
 /* Disallow direct access to the plugin file */
 if (basename($_SERVER['PHP_SELF']) == basename(__FILE__)) {
@@ -153,6 +153,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 $this->options['lng'] = floatval($_POST['lng']);
                 $this->options['zoom'] = intval($_POST['zoom']);
                 $this->options['time_format'] = intval($_POST['time_format']);
+                $this->options['lang'] = sanitize_text_field($_POST['lang']);
                 $this->save_admin_options();
                 set_transient('admin_notice', 'Please put down your weapon. You have 20 seconds to comply.');
                 echo '<div class="updated"><p>Success! Your changes were successfully saved!</p></div>';
@@ -165,7 +166,11 @@ if (!class_exists("BMLTMeetingMap")) {
                     <?php $this_connected = $this->testRootServer($this->options['root_server']); ?>
                     <?php $connect = "<p><div style='color: #f00;font-size: 16px;vertical-align: text-top;' class='dashicons dashicons-no'></div><span style='color: #f00;'>Connection to Root Server Failed.  Check spelling or try again.  If you are certain spelling is correct, Root Server could be down.</span></p>"; ?>
                     <?php if ($this_connected != false) {
-                        $versionString = simplexml_load_string($this_connected)->serverVersion->readableString;
+                        $info = simplexml_load_string($this_connected);
+                        if (!isset($this->options['lang']) || $this->options['lang']=='') {
+                            $this->options['lang'] = 'en';
+                        }
+                        $versionString = $info->serverVersion->readableString;
                         $versionParts = explode('.', $versionString);
                         if (intval($versionParts[0])*100+intval($versionParts[1]) < intval(213)) {
                             $connect = "<span style='color: #f00;'><div style='font-size: 16px;vertical-align: text-top;' class='dashicons dashicons-no'></div>Version ".$this_connected." -- Requires at least 2.13</span>";
@@ -237,6 +242,13 @@ if (!class_exists("BMLTMeetingMap")) {
                     <div style="padding: 0 15px;" class="postbox">
                         <h3>Internationalization</h3>
                         <ul>
+                            <li>
+                                <label for="lang">Default language: </label>
+                                <select id="lang" name="lang" >
+                                    <option value="de" <?php echo ( 'de' == $this->options['lang'] ? 'selected' : '' )  ?>>German</option>
+                                    <option value="en" <?php echo ( 'en' == $this->options['lang'] ? 'selected' : '' )  ?>>English</option>
+                                </select>
+                            <li>
                             <li>
                                 <label for="time_format">Time Format: </label>
                                 <select id="time_format" name="time_format" >
@@ -367,11 +379,14 @@ if (!class_exists("BMLTMeetingMap")) {
             if (!isset($this->options['time_format'])) {
                 $this->options['time_format'] = 24;
             }
+            if (!isset($this->options['lang'])) {
+                $this->options['lang'] = 'en';
+            }
             extract($att = shortcode_atts(array(
                 'lat' => $this->options['lat'],
                 'lng' => $this->options['lng'],
                 'zoom' => $this->options['zoom'],
-                'lang_enum' => 'de',
+                'lang_enum' => $this->options['lang'],
                 'query_string' => '',
                 'center_me' => 0,
                 'goto' => ''
@@ -489,11 +504,9 @@ if (!class_exists("BMLTMeetingMap")) {
             }
             
             // Include the Google Maps API files.
-            $region = 'de';
             $ret = '<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=geometry&key='.$gKey;
             if (isset($options['region_bias']) && $options['region_bias']) {
                 $ret .= '&region='.strtoupper($options['region_bias']);
-                $region = $options['region_bias'];
             }
             $ret .= '"></script>';
             // Declare the various globals and display strings. This is how we pass strings to the JavaScript, as opposed to the clunky way we do it in the root server.
