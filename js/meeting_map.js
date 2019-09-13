@@ -153,7 +153,7 @@ function MeetingMap (
 	            navigator.geolocation.getCurrentPosition(function(position) {
 	                var latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
 	                g_main_map.setCenter(latlng);
-	                g_main_map.setZoom(getZoomAdjust());
+	                g_main_map.setZoom(getZoomAdjust(false));
 	            });
 	        }
 		} else if (goto != '') {
@@ -257,7 +257,7 @@ function MeetingMap (
 		//makeVisible();
 
 	};
-	function getZoomAdjust() {
+	function getZoomAdjust($only_out) {
 		if (!g_main_map) return 12;
 		var ret = g_main_map.getZoom();
 		var center = g_main_map.getCenter();
@@ -275,7 +275,7 @@ function MeetingMap (
 			    lng: (2*bounds.getSouthWest().lng())-center.lng()});
 			bounds = new google.maps.LatLngBounds(sw,ne);
 		}
-		if (!zoomedOut && ret<12) {
+		if (!$only_out && !zoomedOut && ret<12) {
 			var knt = filterMeetings(filterBounds(bounds)).length;
 			while(ret<12 && knt>0) {
 				// no exact, because earth is curved
@@ -542,7 +542,8 @@ function MeetingMap (
 			for (i=0; i<myFormatKeys.length; i++) {
 				theFormat = g_main_map.format_hash[myFormatKeys[i]];
 				if (typeof theFormat == 'undefined') continue;
-				if (theFormat.format_type_enum=='FC2' || theFormat.format_type_enum=='FC3' || theFormat.format_type_enum.charAt(0)=='O') {
+				if (theFormat.format_type_enum=='FC2' || theFormat.format_type_enum=='FC3' || 
+				    ((typeof theFormat.format_type_enum!=='undefined')&&theFormat.format_type_enum.charAt(0)=='O')) {
 					ret += theFormat['name_string'] + '; ';
 				}
 			}
@@ -659,7 +660,8 @@ function MeetingMap (
 		{
 				g_main_map.panTo ( in_geocode_response[0].geometry.location );
 				google.maps.event.addListenerOnce( g_main_map, 'idle', function(ev) {
-					g_main_map.setZoom(getZoomAdjust());
+					g_main_map.fitBounds(in_geocode_response[0].geometry.viewport);
+					g_main_map.setZoom(getZoomAdjust(true));
 				});
 		}
 		else    // FAIL
@@ -747,7 +749,7 @@ function MeetingMap (
 	    		navigator.geolocation.getCurrentPosition(function(position) {
 	    			var latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
 	    			map.setCenter(latlng);
-	    			map.setZoom(getZoomAdjust());
+	    			map.setZoom(getZoomAdjust(false));
 	    		});
 	    	}
         });
@@ -818,7 +820,8 @@ function MeetingMap (
     	var openFormat;
     	
     	for (var key in g_main_map.format_hash) {
-    		var format = g_main_map.format_hash[key];
+			var format = g_main_map.format_hash[key];
+			if (typeof format.format_type_enum=='undefined') continue;
     		if (format.format_type_enum=='LANG' && key!='de') {
     			langFormats.push(format);
     		} else if (format.format_type_enum=='FC2' || format.format_type_enum=='FC3') {
@@ -843,13 +846,20 @@ function MeetingMap (
     	lang_element = fillSelect('language_filter',langFormats,g_filterHaving);
     	fmt_element = fillSelect('main_filter',mainFormats,g_filterHaving);
     	day_element = fillSelect('day_filter',dayFormats,g_filterWeekday);
-    	open_element = document.getElementById('open_filter');
-    	document.getElementById('open_filter_text').innerHTML=openFormat.name_string;
-    	if (g_filterHaving!=null && g_filterHaving.includes('O')) {
-    		open_element.checked = true;
-    	} else {
-    		open_element.checked = false;
-    	}
+		open_element = document.getElementById('open_filter');
+		if (typeof openFormat !== 'undefined') {
+			document.getElementById('open_filter_text').innerHTML=openFormat.name_string;
+			
+    		if (g_filterHaving!=null && g_filterHaving.includes('O')) {
+    			open_element.checked = true;
+    		} else {
+				open_element.checked = false;
+			}
+		} else {
+			open_element.style.display = "none";
+			document.getElementById('open_filter_text').style.display = "none";
+			open_element.checked = false;
+    	} 
     	
     	var modal = document.getElementById('filter_modal');
     	document.getElementById('filter_button').addEventListener('click', function() {
@@ -890,7 +900,7 @@ function MeetingMap (
     			g_filterWeekday = null;
     		closeModalWindow(modal);
     		draw_markers();
-    		g_main_map.setZoom(getZoomAdjust());
+    		g_main_map.setZoom(getZoomAdjust(false));
     	});
     	document.getElementById('reset_filter_button').addEventListener('click', function() {
     		g_filterHaving = null;

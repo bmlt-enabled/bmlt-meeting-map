@@ -376,12 +376,12 @@ if (!class_exists("BMLTMeetingMap")) {
                 'center_me' => 0,
                 'goto' => ''
             ), $att, 'bmlt_meeting_map'));
-            $gotomeTmp = sanitize_text_field($_GET['gotoMe']);
+            $gotomeTmp = isset($_GET['gotoMe']) ? $_sanitize_text_field($_GET['gotoMe']) : '';
             if ($gotomeTmp!='' && $gotomeTmp!='0') {
                 $center_me = 1;
                 $goto = '';
             }
-            $gotoTmp = sanitize_text_field($_GET['goto']);
+            $gotoTmp = isset($_GET['goto']) ? sanitize_text_field($_GET['goto']) : '';
             if ($gotoTmp!='') {
                 $goto = $gotoTmp;
                 $center_me = 0;
