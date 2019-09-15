@@ -298,9 +298,6 @@ if (!class_exists("BMLTMeetingMap")) {
                     </div>
                 </div>
             </div>
-            <script>
-            getValueSelected();
-            </script>
             <?php
         }
         /**
