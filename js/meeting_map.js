@@ -154,8 +154,13 @@ function MeetingMap (
 	                var latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
 	                g_main_map.setCenter(latlng);
 	                g_main_map.setZoom(getZoomAdjust(false));
-	            });
-	        }
+				},
+				function() {
+					showSearchDialog(null);
+				});
+	        } else {
+				showSearchDialog(null);
+			}
 		} else if (goto != '') {
 			callGeocoder(goto);
 		} 

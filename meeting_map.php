@@ -1,9 +1,9 @@
 <?php
-/** 
+/*
 Plugin Name: BMLT Meeting Map
 Description: Simple responsive Meeting Map.
 Author: Ron B
-Version: 1.0.6
+Version: 1.0.5
 */
 /* Disallow direct access to the plugin file */
 if (basename($_SERVER['PHP_SELF']) == basename(__FILE__)) {
@@ -298,6 +298,9 @@ if (!class_exists("BMLTMeetingMap")) {
                     </div>
                 </div>
             </div>
+            <script>
+            getValueSelected();
+            </script>
             <?php
         }
         /**
@@ -540,12 +543,12 @@ if (!class_exists("BMLTMeetingMap")) {
             $ret .= '<style type="text/css">.onoffswitch-inner:before {
     content: "'.$translate["Next_24_hours"].'";
     padding-left: 10px;
-    background-color: #34A7C1; color: #FFFFFF;
+    background-color: #2d5c88; color: #FFFFFF;
 }
 .onoffswitch-inner:after {
     content: "'.$translate["All_Meetings"].'";
     padding-left: 30px;
-    background-color: #EEEEEE; color: #999999;
+    background-color: #EEEEEE; color: #2d5c88;
     text-align: left;
 }</style>';
             return $ret;

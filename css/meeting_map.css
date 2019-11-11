@@ -163,7 +163,7 @@ input[name='panel']:checked ~ .marker_div_meeting {
 }
 .onoffswitch-label {
     display: block; overflow: hidden; cursor: pointer;
-    border: 2px solid #999999 !important; border-radius: 20px !important;
+    border: 2px solid #2d5c88 !important; border-radius: 20px !important;
     	    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
     
 }
@@ -182,7 +182,7 @@ input[name='panel']:checked ~ .marker_div_meeting {
     background: #FFFFFF !important;
     position: absolute; top: 0; bottom: 0;
     right: 136px !important;
-    border: 2px solid #999999 !important; border-radius: 20px;
+    border: 2px solid #2d5c88 !important; border-radius: 20px;
     transition: all 0.3s ease-in 0s; 
 }
 .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
@@ -214,7 +214,7 @@ div.bmlt_map_container_div  input {
 }
 div.bmlt_map_container_div  button {
 	background-color: #eeeeee !important;
-	color: #999999 !important;
+	color: #2d5c88 !important;
 }
 #open_filter {
 	width: inherit;
@@ -285,7 +285,7 @@ div.bmlt_map_container_div  button {
 .custom-dropdown select {
   background-color: #eeeeee !important;
   width:100% !important;
-  color: #999999 !important;
+  color: #2d5c88 !important;
   font-size: inherit;
   font-weight: bold !important;
   padding: .25em !important;
@@ -294,7 +294,7 @@ div.bmlt_map_container_div  button {
   height: 2em !important;
   border-style: solid !important;
   border-width: 1px !important;
-  border-color: #999999 !important;
+  border-color: #2d5c88 !important;
   margin: 0 !important;
   border-radius: 3px;
   text-indent: 0.01px;
@@ -422,11 +422,11 @@ div.bmlt_map_container_div  button {
 }
 .menu-button {
         background-color: #EEEEEE !important;
-        color: #999999 !important;
+        color: #2d5c88 !important;
 	    outline: none;
 	    width: 55px;
 	    height: 32px;
-    	border: 2px solid #999999 !important; border-radius: 20px !important;
+    	border: 2px solid #2d5c88 !important; border-radius: 20px !important;
 	    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 	    cursor: pointer;
 	    margin-right: 10px;
@@ -442,6 +442,8 @@ div.bmlt_map_container_div  button {
     left: -0.3em;
     font-weight: bold;
     font-size: 14px;
+    color: #2d5c88 !important;
+
 }
 .menu-button-child {
 	    width: 32px;
@@ -464,7 +466,7 @@ div.bmlt_map_container_div  button {
 .menu-dropdown {
 		display: none;
 background-color: #EEEEEE;
-    color: #999999;
+    color: #2d5c88;
 	    position: absolute;
 	    top: 45px;
 	    right: 10px;
