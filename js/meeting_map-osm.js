@@ -1,19 +1,50 @@
-function MeetingMap (in_div, in_coords)
+function MeetingMap (
+		in_div,
+		in_coords
+)
 {
 	/****************************************************************************************
 	 *										CLASS VARIABLES									*
 	 ****************************************************************************************/
-	var g_in_div = in_div;
+	var	g_main_map = null;				///< This will hold the Google Map object.
+	var	g_allMarkers = [];				///< Holds all the markers.
+	var g_initial_call = false;         ///< Set to true, once we have zoomed in.
+	var g_initial_coords = in_coords;
+	var g_initial_div = in_div;
 	var g_next24hours = false;
 	var g_filterHaving = null;
 	var g_filterWeekday = null;
 	var g_filterNotHaving = null;
 
-	var g_delegate = new MapDelegate();
+	/// These describe the regular NA meeting icon
+	var g_icon_image_single = L.icon({
+		iconUrl: c_g_BMLTPlugin_images+"/NAMarker.png",
+		shadowUrl: c_g_BMLTPlugin_images+"/NAMarkerS.png",
+		iconSize:     [23, 32], // size of the icon
+		shadowSize:   [43, 32], // size of the shadow
+		iconAnchor:   [12, 32], // point of the icon which will correspond to marker's location
+		shadowAnchor: [12, 32],  // the same for the shadow
+		popupAnchor:  [0, -32] // point from which the popup should open relative to the iconAnchor
+	});
+	var g_icon_image_multi = L.icon({
+		iconUrl: c_g_BMLTPlugin_images+"/NAMarkerG.png",
+		shadowUrl: c_g_BMLTPlugin_images+"/NAMarkerS.png",
+		iconSize:     [23, 32], // size of the icon
+		shadowSize:   [43, 32], // size of the shadow
+		iconAnchor:   [12, 32], // point of the icon which will correspond to marker's location
+		shadowAnchor: [12, 32],  // the same for the shadow
+		popupAnchor:  [0, -32] // point from which the popup should open relative to the iconAnchor
+	});
+	var g_icon_image_selected = L.icon({
+		iconUrl: c_g_BMLTPlugin_images+"/NAMarkerSel.png",
+		shadowUrl: c_g_BMLTPlugin_images+"/NAMarkerS.png",
+		iconSize:     [23, 32], // size of the icon
+		shadowSize:   [43, 32], // size of the shadow
+		iconAnchor:   [12, 32], // point of the icon which will correspond to marker's location
+		shadowAnchor: [12, 32],  // the same for the shadow
+		popupAnchor:  [12, -32] // point from which the popup should open relative to the iconAnchor
+	});
 
-	var g_response_object = null;
-	var g_format_hash = null;
-	
 	/************************************************************************************//**
 	 *	\brief Load the map and set it up.													*
 	 ****************************************************************************************/
@@ -24,19 +55,35 @@ function MeetingMap (in_div, in_coords)
 		{
 			in_div.myThrobber = null;
 
-			if ( g_delegate.createMap(in_div, in_location_coords) )
+			if ( in_location_coords )
+			{
+				var myOptions = {
+						'center': new L.latLng ( in_location_coords.latitude, in_location_coords.longitude ),
+						'zoom': in_location_coords.zoom,
+						'minZoom': 6,
+						'maxZoom': 18,
+						'doubleClickZoom' : false
+				};
+
+				var	pixel_width = in_div.offsetWidth;
+				
+				g_main_map = new L.Map ( in_div, myOptions );
+				L.tileLayer(c_g_tileUrl,c_g_tileOptions).addTo(g_main_map);
+				g_main_map.zoomControl.setPosition('bottomright');
+			};
+
+			if ( g_main_map )
 			{
 				create_throbber(in_div);
-				g_delegate.addListener('zoomend', function(ev){
-					if ( g_response_object &&
-							g_format_hash) {
+				g_main_map.on( 'zoomend', function(ev){
+					if ( g_main_map.response_object &&
+							g_main_map.format_hash) {
 						search_response_callback();
 					}
-				},false);
+				});
 				show_throbber();
-				var	pixel_width = in_div.offsetWidth;
-				g_delegate.addControl(createFilterMeetingsToggle(),'topleft');
-				g_delegate.addControl(createMenuButton(pixel_width),'topright');
+				addFilterMeetingsToggle();
+				addMenuButton(pixel_width);
 			};
 		};
 	};
@@ -45,58 +92,78 @@ function MeetingMap (in_div, in_coords)
 	 *	\brief 
 	 ****************************************************************************************/
 
-	function create_throbber ( in_div )	{
-		if ( !in_div.myThrobber ) {
-			in_div.myThrobber = document.createElement("div");
-			if ( in_div.myThrobber ) {
-				in_div.myThrobber.id = in_div.id+'_throbber_div';
-				in_div.myThrobber.className = 'bmlt_map_throbber_div';
-				in_div.myThrobber.style.display = 'none';
-				in_div.appendChild ( in_div.myThrobber );
+	function create_throbber ( in_div    ///< The container div for the throbber.
+	)
+	{
+		if ( !g_main_map.myThrobber )
+		{
+			g_main_map.myThrobber = document.createElement("div");
+			if ( g_main_map.myThrobber )
+			{
+				g_main_map.myThrobber.id = in_div.id+'_throbber_div';
+				g_main_map.myThrobber.className = 'bmlt_map_throbber_div';
+				g_main_map.myThrobber.style.display = 'none';
+				in_div.appendChild ( g_main_map.myThrobber );
 				var img = document.createElement("img");
 
-				if ( img ) {
+				if ( img )
+				{
 					img.src = c_g_BMLTPlugin_throbber_img_src;
 					img.className = 'bmlt_map_throbber_img';
 					img.id = in_div.id+'_throbber_img';
 					img.alt = 'AJAX Throbber';
-					in_div.myThrobber.appendChild ( img );
-				} else {
+					g_main_map.myThrobber.appendChild ( img );
+				}
+				else
+				{
 					in_div.myThrobber = null;
 				};
 			};
 		};
 	};
-	function show_throbber() {
-		if ( g_in_div.myThrobber ) {
-			g_in_div.myThrobber.style.display = 'block';
+
+	/************************************************************************************//**
+	 *	\brief 
+	 ****************************************************************************************/
+
+	function show_throbber()
+	{
+		if ( g_main_map.myThrobber )
+		{
+			g_main_map.myThrobber.style.display = 'block';
 		};
 	};
+
+	/************************************************************************************//**
+	 *	\brief 
+	 ****************************************************************************************/
+
 	function hide_throbber()
 	{
-		if ( g_in_div.myThrobber ) {
-			g_in_div.myThrobber.style.display = 'none';
+		if ( g_main_map.myThrobber )
+		{
+			g_main_map.myThrobber.style.display = 'none';
 		};
 	};
 	function loadAllMeetings(meetings_response_object,formats_response_object,centerMe,goto) {
-		g_response_object = meetings_response_object;
-		g_format_hash = create_format_hash(formats_response_object);
+		g_main_map.response_object = meetings_response_object;
+		g_main_map.format_hash = create_format_hash(formats_response_object);
 		search_response_callback();
 		if (centerMe != 0) {
 	        if(navigator.geolocation) {
-	            navigator.geolocation.getCurrentPosition(
-					function(position) {
-						g_delegate.setViewToPosition(position,filterMeetingsAndBounds);
-					},
-					function() {
-						showSearchDialog(null);
-					}
-				);
+	            navigator.geolocation.getCurrentPosition(function(position) {
+	                var latlng = new L.latLng(position.coords.latitude, position.coords.longitude);
+	                g_main_map.setView(latlng, g_main_map.getZoom());
+	                g_main_map.setZoom(getZoomAdjust(false));
+				},
+				function() {
+					showSearchDialog(null);
+				});
 	        } else {
 				showSearchDialog(null);
 			}
 		} else if (goto != '') {
-			callGeocoder(goto, filterMeetingsAndBounds);
+			callGeocoder(goto);
 		} 
 		hide_throbber();
 	}
@@ -127,18 +194,20 @@ function MeetingMap (in_div, in_coords)
 		});
 		return ret;
 	}
-	function search_response_callback() {
-		if ( !g_response_object.length ) {
+	/************************************************************************************//**
+	 *	\brief 
+	 ****************************************************************************************/
+
+	function search_response_callback()
+	{
+		if ( !g_main_map.response_object.length )
+		{
 			alert ( g_no_meetings_found );
 			return;
 		};
-		try {
-			draw_markers();
-		} catch (e) {
-			g_delegate.addListener( 'projection_changed', function(ev){
-				draw_markers();
-			},true);
-		}
+
+		draw_markers();
+
 	};
 
 
@@ -146,18 +215,99 @@ function MeetingMap (in_div, in_coords)
 	 *									CREATING MARKERS									*
 	 ****************************************************************************************/
 
-	function draw_markers() {
-		g_delegate.clearAllMarkers();
+	/************************************************************************************//**
+	 *	\brief Remove all the markers.														*
+	 ****************************************************************************************/
+	function clearAllMarkers ( )
+	{
+		if ( g_allMarkers )
+		{
+
+			for ( var c = 0; c < g_allMarkers.length; c++ )
+			{
+				g_allMarkers[c].remove( );
+				g_allMarkers[c] = null;
+			};
+
+			g_allMarkers.length = 0;
+		};
+	};
+
+	/************************************************************************************//**
+	 *	\brief Calculate and draw the markers.												*
+	 ****************************************************************************************/
+
+	function draw_markers()
+	{
+		clearAllMarkers();
 
 		// This calculates which markers are the red "multi" markers.
-		var overlap_map = mapOverlappingMarkersInCity ( filterMeetings(g_response_object) );
+		var overlap_map = mapOverlappingMarkersInCity ( filterMeetings(g_main_map.response_object) );
 
 		// Draw the meeting markers.
 		overlap_map.forEach ( function(marker) {
 			createMapMarker ( marker );
 		});
-	};
+		//makeVisible();
 
+	};
+	function getZoomAdjust($only_out) {
+		if (!g_main_map) return 12;
+		var ret = g_main_map.getZoom();
+		var center = g_main_map.getCenter();
+		var bounds = g_main_map.getBounds();
+		var zoomedOut = false;
+		while(filterMeetings(filterBounds(bounds)).length==0 && ret>6) {
+			zoomedOut = true;
+			// no exact, because earth is curved
+			ret -= 1;
+			var ne = L.latLng(
+				(2*bounds.getNorthEast().lat)-center.lat,
+			    (2*bounds.getNorthEast().lng)-center.lng);
+			var sw = L.latLng(
+				(2*bounds.getSouthWest().lat)-center.lat,
+				(2*bounds.getSouthWest().lng)-center.lng);
+			bounds = new L.latLngBounds(sw,ne);
+		}
+		if (!$only_out && !zoomedOut && ret<12) {
+			var knt = filterMeetings(filterBounds(bounds)).length;
+			while(ret<12 && knt>0) {
+				// no exact, because earth is curved
+				ret += 1;
+				var ne = L.latLng(
+					0.5*(bounds.getNorthEast().lat+center.lat),
+					0.5*(bounds.getNorthEast().lng+center.lng));
+				var sw = L.latLng(
+					 0.5*(bounds.getSouthWest().lat+center.lat),
+					0.5*(bounds.getSouthWest().lng+center.lng));
+				bounds = L.latLngBounds(sw,ne);
+				knt = filterMeetings(filterBounds(bounds)).length;
+			}
+			if (knt == 0) {
+				ret -= 1;
+			}
+		} 
+		return ret;
+	}
+	function filterVisible() {
+		if (g_main_map) {
+			var bounds = g_main_map.getBounds();
+			return filterBounds(bounds);
+		};
+		return new Array;
+	};
+	function filterBounds(bounds) {
+		var ret = new Array;
+		g_main_map.response_object.forEach( function(meeting) {
+			if (bounds.contains(L.latLng ( meeting.latitude, meeting.longitude ))) {
+                ret.push(meeting);
+            }
+		});	
+		return ret;
+	}
+	function fromLatLngToPoint(lat, lng, map) {
+		return map.latLngToLayerPoint(L.latLng(lat,lng));
+	};
 	function mapOverlappingMarkersInCity (in_meeting_array)	///< Used to draw the markers when done.
 	{
 		var city_hash = create_city_hash(in_meeting_array);
@@ -173,7 +323,7 @@ function MeetingMap (in_div, in_coords)
 				tmp[c].matched = false;
 				tmp[c].matches = null;
 				tmp[c].object = city.meetings[c];
-				tmp[c].coords = g_delegate.fromLatLngToPoint( tmp[c].object.latitude, tmp[c].object.longitude );
+				tmp[c].coords = fromLatLngToPoint( tmp[c].object.latitude, tmp[c].object.longitude, g_main_map);
 			};
 			for ( var c = 0; c < city.meetings.length; c++ )
 			{
@@ -281,7 +431,7 @@ function MeetingMap (in_div, in_coords)
 		var checked = ' checked';
 		var marker_title = '';
 		for ( var c = 0; c < in_mtg_obj_array.length; c++ ) {
-			marker_html += '<div><input type="radio" name="panel" id="panel-'+c+'"'+checked+'>';
+		    marker_html += '<div><input type="radio" name="panel" id="panel-'+c+'"'+checked+'>';
 			if (c>0) {
 				marker_title += '; ';
 			}
@@ -294,8 +444,8 @@ function MeetingMap (in_div, in_coords)
 			
 		}
 		marker_html += '</div>';
-		g_delegate.createMarker ( main_point,
-				       (in_mtg_obj_array.length>1),
+		createMarker ( main_point,
+				       ((in_mtg_obj_array.length>1) ? g_icon_image_multi : g_icon_image_single),
 				       marker_html, marker_title );
 	};
 	function getDayAndTime( in_meeting_obj ) {
@@ -316,7 +466,7 @@ function MeetingMap (in_div, in_coords)
 		{
 			var myFormatKeys = in_meeting_obj.formats.split(',');
 			for (i=0; i<myFormatKeys.length; i++) {
-				theFormat = g_format_hash[myFormatKeys[i]];
+				theFormat = g_main_map.format_hash[myFormatKeys[i]];
 				if (typeof theFormat == 'undefined') continue;
 				if (theFormat.format_type_enum=='LANG') {
 					var a = c_g_BMLTPlugin_images+'/../lang/'+theFormat.key_string+".png";
@@ -381,7 +531,7 @@ function MeetingMap (in_div, in_coords)
 			ret += '<div class="marker_div_formats">';
 			var myFormatKeys = in_meeting_obj.formats.split(',');
 			for (i=0; i<myFormatKeys.length; i++) {
-				theFormat = g_format_hash[myFormatKeys[i]];
+				theFormat = g_main_map.format_hash[myFormatKeys[i]];
 				if (typeof theFormat == 'undefined') continue;
 				if (theFormat.format_type_enum=='FC2' || theFormat.format_type_enum=='FC3' || 
 				    ((typeof theFormat.format_type_enum!=='undefined')&&theFormat.format_type_enum.charAt(0)=='O')) {
@@ -392,29 +542,123 @@ function MeetingMap (in_div, in_coords)
 		};
 		ret += '</div>';
 
- 
+
 		return ret;
 	};
-	function filterBounds(bounds) {
-		var ret = new Array;
-		g_response_object.forEach( function(meeting) {
-			if (g_delegate.contains(bounds, meeting.latitude, meeting.longitude )) {
-                ret.push(meeting);
-            }
-		});	
-		return ret;
+	/************************************************************************************//**
+	 *	\brief Create a generic marker.														*
+	 *																						*
+	 *	\returns a marker object.															*
+	 ****************************************************************************************/
+
+	function createMarker (	in_coords,		///< The long/lat for the marker.
+			in_main_icon,	///< The URI for the main icon
+			in_html,		///< The info window HTML
+			in_title        ///< The tooltip
+	)
+	{
+		var marker = L.marker(in_coords, {icon: in_main_icon, title: in_title}).bindPopup(in_html).addTo(g_main_map);
+		g_allMarkers[g_allMarkers.length] = marker;
+	};
+	/************************************************************************************//**
+	 *	\brief  
+	 ****************************************************************************************/
+	function promptLocation(in_event) {
+		in_event.target.value = c_g_searchPrompt;
+	}
+	function clearLocation(in_event) {
+		in_event.target.value = '';
 	}
 	function lookupLocation (in_event)
 	{
 		if (in_event && in_event.keyCode!=13) { return false; };
-		if ( in_event.target.value != '') {
-			g_delegate.callGeocoder(in_event.target.value, filterMeetingsAndBounds);
-		} else {
+		if ( in_event.target.value != '')
+		{
+			callGeocoder(in_event.target.value);
+		}
+		else
+		{
 			alert ( c_g_address_lookup_fail );
 		};
 		return true;
 	};
-	function createMenuButton(pixel_width) {
+
+	/************************************************************************************//**
+	 *	\brief This catches the AJAX response, and fills in the response form.				*
+	 ****************************************************************************************/
+
+	function geoCallback ( in_geocode_response	///< The JSON object.
+	)
+	{
+		if ( in_geocode_response && in_geocode_response[0] && in_geocode_response[0].bbox ) {
+			g_main_map.flyToBounds ( in_geocode_response[0].bbox );
+			g_main_map.on('moveend', function(ev) {
+				g_main_map.off('moveend');
+				g_main_map.setZoom(getZoomAdjust(true));
+			});
+		} else {
+			alert ( c_g_address_lookup_fail );
+		};
+	};
+	function callGeocoder(in_loc) {
+		var	geocoder = geocode(in_loc, {}, geoCallback);
+
+		// if ( geocoder )
+		// {
+		// 	var geoCodeParams = { 'address': in_loc };
+		// 	if (c_g_region.trim() !== '') {
+		// 		geoCodeParams.region = c_g_region;
+		// 	}
+		// 	if (c_g_bounds
+		// 	&&  c_g_bounds.north && c_g_bounds.north.trim()!== ''
+		// 	&&  c_g_bounds.east && c_g_bounds.east.trim()!== ''
+		// 	&&  c_g_bounds.south && c_g_bounds.south.trim()!== ''
+		// 	&&  c_g_bounds.west && c_g_bounds.west.trim()!== '') {
+		// 		geoCodeParams.bounds = new google.maps.LatLngBounds(
+		// 			new google.maps.LatLng(c_g_bounds.south, c_g_bounds.west), 
+		// 			new google.maps.LatLng(c_g_bounds.north, c_g_bounds.east));
+		// 	}
+		// 	var	status = geocoder.geocode ( geoCodeParams, geoCallback );
+
+		// 	if ( google.maps.OK != status )
+		// 	{
+		// 		if ( google.maps.INVALID_REQUEST != status )
+		// 		{
+		// 			alert ( c_g_address_lookup_fail );
+		// 		}
+		// 		else
+		// 		{
+		// 			if ( google.maps.ZERO_RESULTS != status )
+		// 			{
+		// 				alert ( c_g_address_lookup_fail );
+		// 			}
+		// 			else
+		// 			{
+		// 				alert ( c_g_server_error );
+		// 			};
+		// 		};
+		// 	};
+		// }
+		// else	// None of that stuff is defined if we couldn't create the geocoder.
+		// {
+		// 	alert ( c_g_server_error );
+		// };
+	}
+	function addMenuButton(pixel_width) {
+		L.Control.MenuButton =  L.Control.extend({
+	  		onAdd: function (map) {
+				return createMenuButton(map,pixel_width);
+			},
+			onRemove: function(map) {
+				// Nothing to do here
+			}
+		});
+		L.control.menuButton = function(opts) {
+			return new L.Control.MenuButton(opts);
+		}
+		var c = L.control.menuButton({ position: 'topright' }).addTo(g_main_map);
+	}
+	function createMenuButton(map,pixel_width) {
 	    var controlDiv = document.createElement('div');
 
 	    var firstChild = document.createElement('button');
@@ -448,7 +692,12 @@ function MeetingMap (in_div, in_coords)
 	    item.addEventListener('click', function(e) {
 	    	if(navigator.geolocation) {
 	    		navigator.geolocation.getCurrentPosition(function(position) {
-	    			g_delegate.setViewToPosition(position,filterMeetingsAndBounds);
+	    			var latlng = L.latLng(position.coords.latitude, position.coords.longitude);
+	    			map.flyTo(latlng);
+					map.on('moveend', function(ev) {
+						map.off('moveend');
+						g_main_map.setZoom(getZoomAdjust(true));
+					});
 	    		});
 	    	}
         });
@@ -506,7 +755,7 @@ function MeetingMap (in_div, in_coords)
     		}
     	});
     	document.getElementById('goto-button').addEventListener('click', function() {
-    		g_delegate.callGeocoder(document.getElementById('goto-text').value, filterMeetingsAndBounds);
+    		callGeocoder(document.getElementById('goto-text').value);
     		closeModalWindow(modal);
     	});
     	openModalWindow(modal);
@@ -516,8 +765,8 @@ function MeetingMap (in_div, in_coords)
     	var mainFormats = new Array;
     	var openFormat;
     	
-    	for (var key in g_format_hash) {
-			var format = g_format_hash[key];
+    	for (var key in g_main_map.format_hash) {
+			var format = g_main_map.format_hash[key];
 			if (typeof format.format_type_enum=='undefined') continue;
     		if (format.format_type_enum=='LANG' && key!='de') {
     			langFormats.push(format);
@@ -597,7 +846,7 @@ function MeetingMap (in_div, in_coords)
     			g_filterWeekday = null;
     		closeModalWindow(modal);
     		draw_markers();
-    		g_delegate.setZoom(filterMeetingsAndBounds);
+    		g_main_map.setZoom(getZoomAdjust(false));
     	});
     	document.getElementById('reset_filter_button').addEventListener('click', function() {
     		g_filterHaving = null;
@@ -640,9 +889,6 @@ function MeetingMap (in_div, in_coords)
         	modalFilter.value = selected;
         }
 		return modalFilter;
-	}
-	function filterMeetingsAndBounds(bounds) {
-		return filterMeetings(filterBounds(bounds));
 	}
 	function filterMeetings(in_meetings_array) {
 		var ret = filterMeetings24(in_meetings_array, g_next24hours);
@@ -720,7 +966,21 @@ function MeetingMap (in_div, in_coords)
 		}
 		return false;
 	}
-    		function createFilterMeetingsToggle(map) {
+	function addFilterMeetingsToggle() {
+		L.Control.FilterMeetingToggle =  L.Control.extend({
+	  		onAdd: function (map) {
+				return createFilterMeetingsToggle(map);
+			},
+			onRemove: function(map) {
+				// Nothing to do here
+			}
+		});
+		L.control.filterMeetingToggle = function(opts) {
+			return new L.Control.FilterMeetingToggle(opts);
+		}
+		var c = L.control.filterMeetingToggle({ position: 'topleft' }).addTo(g_main_map);
+	}
+    function createFilterMeetingsToggle(map) {
     	var controlDiv = document.createElement('div');
         // Set CSS for the control border.
         var controlUI = document.createElement('div');
@@ -785,7 +1045,7 @@ function MeetingMap (in_div, in_coords)
     	return c_g_weekdays[meeting.weekday_tinyint] + ' ' + meetingTimes(meeting);
     }
 	function showListView() {
-    	var meetings = filterMeetings(g_delegate.filterVisible());
+    	var meetings = filterMeetings(filterVisible());
     	if (meetings.length == 0) return;
     	var modal = document.getElementById('table_modal');
     	document.getElementById('close_table').addEventListener('click', function() {
@@ -845,6 +1105,79 @@ function MeetingMap (in_div, in_coords)
 		  document.getElementById(name).style.display = "block";
 		  evt.currentTarget.className += " active";
 	}
+	// Low level GeoCoding
+	function getJSON(url, params, callback) {
+		var xmlHttp = new XMLHttpRequest();
+		xmlHttp.onreadystatechange = function() {
+		if (xmlHttp.readyState !== 4) {
+		  return;
+		}
+		var message;
+		if (xmlHttp.status !== 200 && xmlHttp.status !== 304) {
+		  message = '';
+		} else if (typeof xmlHttp.response === 'string') {
+		  // IE doesn't parse JSON responses even with responseType: 'json'.
+		  try {
+			message = JSON.parse(xmlHttp.response);
+		  } catch (e) {
+			// Not a JSON response
+			message = xmlHttp.response;
+		  }
+		} else {
+		  message = xmlHttp.response;
+		}
+		callback(message);
+	  };
+	  xmlHttp.open('GET', url + getParamString(params), true);
+	  xmlHttp.responseType = 'json';
+	  xmlHttp.setRequestHeader('Accept', 'application/json');
+	  xmlHttp.send(null);
+	};
+	function getParamString(obj, existingUrl, uppercase) {
+		var params = [];
+		for (var i in obj) {
+		  var key = encodeURIComponent(uppercase ? i.toUpperCase() : i);
+		  var value = obj[i];
+		  if (!L.Util.isArray(value)) {
+			params.push(key + '=' + encodeURIComponent(value));
+		  } else {
+			for (var j = 0; j < value.length; j++) {
+			  params.push(key + '=' + encodeURIComponent(value[j]));
+			}
+		  }
+		}
+		return (!existingUrl || existingUrl.indexOf('?') === -1 ? '?' : '&') + params.join('&');
+	}
+	function geocode(query, params, cb) {
+		var serviceUrl = 'https://nominatim.openstreetmap.org/';
+		getJSON(
+		  serviceUrl + 'search',
+		  L.extend(
+			{
+			  q: query,
+			  limit: 5,
+			  format: 'json',
+			  addressdetails: 1
+			},
+			params
+		  ),
+		  L.bind(function(data) {
+			var results = [];
+			for (var i = data.length - 1; i >= 0; i--) {
+			  var bbox = data[i].boundingbox;
+			  for (var j = 0; j < 4; j++) bbox[j] = parseFloat(bbox[j]);
+			  results[i] = {
+				icon: data[i].icon,
+				name: data[i].display_name,
+				bbox: L.latLngBounds([bbox[0], bbox[2]], [bbox[1], bbox[3]]),
+				center: L.latLng(data[i].lat, data[i].lon),
+				properties: data[i]
+			  };
+			}
+			cb(results);
+		}, this)
+		);
+	};
 	/****************************************************************************************
 	 *								MAIN FUNCTIONAL INTERFACE								*
 	 ****************************************************************************************/

@@ -30,7 +30,8 @@ div.bmlt_search_map_div {
     margin:auto;
     left:0;
 	top:0;
-	height:100%;	
+  height:100%;	
+  z-index: 10;
 }
 div.bmlt_map_container_div .bmlt_map_throbber_div
 {
@@ -224,7 +225,7 @@ div.bmlt_map_container_div  button {
   font-size: 14px !important; color: black; font-family: Roboto, Arial, sans-serif !important; 
   display: none; /* Hidden by default */
   position: fixed; /* Stay in place */
-  z-index: 1; /* Sit on top */
+  z-index: 1000; /* Sit on top */
   left: 0;
   top: 0;
   width: 100%; /* Full width */
@@ -482,4 +483,7 @@ background-color: #EEEEEE;
   text-decoration: none;
   display: block;
   width: 100%;
+}
+.leaflet-popup-content {
+  margin: 0px 0px;
 }

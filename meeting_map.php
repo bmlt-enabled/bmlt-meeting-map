@@ -3,7 +3,7 @@
 Plugin Name: BMLT Meeting Map
 Description: Simple responsive Meeting Map.
 Author: Ron B
-Version: 1.0.5
+Version: 2.0.0
 */
 /* Disallow direct access to the plugin file */
 if (basename($_SERVER['PHP_SELF']) == basename(__FILE__)) {
@@ -34,6 +34,38 @@ if (!class_exists("BMLTMeetingMap")) {
                 ));
             }
         }
+        public function enhanceTileProvider() {
+            switch($this->options['tile_provider']) {
+            case 'MapBox':
+                $this->options['tile_url'] = 
+                    'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}';
+                $this->options['tile_params'] = array(
+                    'attribution'   => 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+                    'id'            => 'mapbox.streets',
+                    'accessToken'   => $this->options['api_key']
+                );
+                break;
+            case "OSM":
+                $this->options['tile_url'] = 
+                    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+                $this->options['tile_params'] = array(
+                    'attribution'   => 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+                    //'subdomains'    => '["a","b","c"]'
+                );
+                break;
+            default:
+            case "OSM DE":
+                $this->options['tile_url'] = 
+                    'https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png';
+                $this->options['tile_params'] = array(
+                    'attribution'   => 'Map data &copy; <a href="https://www.openstreetmap.de/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+                    "maxZoom"       => '18',
+                    //'subdomains'    => '["a","b","c"]'
+                );
+                break;
+               // http://tileserver.maptiler.com/campus/{z}/{x}/{y}.png
+            }
+        }
         // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
         public function has_shortcode()
         {
@@ -52,7 +84,7 @@ if (!class_exists("BMLTMeetingMap")) {
             $root_server = $this->options['root_server'];
             if ($root_server == '') {
                 echo '<div id="message" class="error"><p>Missing BMLT Root Server in settings for BMLT Meeting Map.</p>';
-                $url = admin_url('options-general.php?page=meeting_map.php');
+                $url = admin_url('options-general.php?page=bmlt_meeting_map.php');
                 echo "<p><a href='$url'>BMLT_Meeting_Map Settings</a></p>";
                 echo '</div>';
             }
@@ -89,10 +121,20 @@ if (!class_exists("BMLTMeetingMap")) {
         {
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
             if ($this->has_shortcode()) {
-                wp_enqueue_style("snazzy-info-window", plugin_dir_url(__FILE__) . "css/snazzy-info-window.min.css", false, filemtime(plugin_dir_path(__FILE__) . "css/snazzy-info-window.min.css"), false);
-                wp_enqueue_style("meeting_map", plugin_dir_url(__FILE__) . "css/meeting_map.css", false, filemtime(plugin_dir_path(__FILE__) . "css/meeting_map.css"), false);
-                wp_enqueue_script("snazzy-info-window", plugin_dir_url(__FILE__) . "js/snazzy-info-window.min.js", false, filemtime(plugin_dir_path(__FILE__) . "js/snazzy-info-window.min.js"), true);
-                wp_enqueue_script("meeting_map", plugin_dir_url(__FILE__) . "js/meeting_map.js", false, filemtime(plugin_dir_path(__FILE__) . "js/meeting_map.js"), false);
+                if ($this->options['tile_provider'] == 'google') {
+                    wp_enqueue_style("snazzy-info-window", plugin_dir_url(__FILE__) . "css/snazzy-info-window.min.css", false, filemtime(plugin_dir_path(__FILE__) . "css/snazzy-info-window.min.css"), false);
+                    wp_enqueue_style("meeting_map", plugin_dir_url(__FILE__) . "css/meeting_map.css", false, filemtime(plugin_dir_path(__FILE__) . "css/meeting_map.css"), false);
+                    wp_enqueue_script("snazzy-info-window", plugin_dir_url(__FILE__) . "js/snazzy-info-window.min.js", false, filemtime(plugin_dir_path(__FILE__) . "js/snazzy-info-window.min.js"), true);
+                    wp_enqueue_script("gmapsDelegate", plugin_dir_url(__FILE__) . "js/gmapsDelegate.js", false, filemtime(plugin_dir_path(__FILE__) . "js/gmapsDelegate.js"), false);
+                    wp_enqueue_script("meeting_map", plugin_dir_url(__FILE__) . "js/meeting_map.js", false, filemtime(plugin_dir_path(__FILE__) . "js/meeting_map.js"), false);
+                } else {
+                    wp_enqueue_style("leaflet", plugin_dir_url(__FILE__) . "css/leaflet.css", false, filemtime(plugin_dir_path(__FILE__) . "css/leaflet.css"), false);
+                    wp_enqueue_style("meeting_map", plugin_dir_url(__FILE__) . "css/meeting_map.css", false, filemtime(plugin_dir_path(__FILE__) . "css/meeting_map.css"), false);
+                    wp_enqueue_script("leaflet", plugin_dir_url(__FILE__) . "js/leaflet.js", false, filemtime(plugin_dir_path(__FILE__) . "js/leaflet.js"), false);
+                    //wp_enqueue_script("geocoder", plugin_dir_url(__FILE__) . "js/nominatim.js", false, filemtime(plugin_dir_path(__FILE__) . "js/nominatim.js"), false);
+                    wp_enqueue_script("osmDelegate", plugin_dir_url(__FILE__) . "js/osmDelegate.js", false, filemtime(plugin_dir_path(__FILE__) . "js/osmDelegate.js"), false);
+                    wp_enqueue_script("meeting_map", plugin_dir_url(__FILE__) . "js/meeting_map.js", false, filemtime(plugin_dir_path(__FILE__) . "js/meeting_map.js"), false);
+                } 
             }
         }
         public function testRootServer($root_server)
@@ -154,6 +196,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 $this->options['zoom'] = intval($_POST['zoom']);
                 $this->options['time_format'] = intval($_POST['time_format']);
                 $this->options['lang'] = sanitize_text_field($_POST['lang']);
+                $this->options['tile_provider'] = sanitize_text_field($_POST['tile_provider']);
                 $this->save_admin_options();
                 set_transient('admin_notice', 'Please put down your weapon. You have 20 seconds to comply.');
                 echo '<div class="updated"><p>Success! Your changes were successfully saved!</p></div>';
@@ -190,11 +233,17 @@ if (!class_exists("BMLTMeetingMap")) {
                         </ul>
                     </div>
                     <div style="padding: 0 15px;" class="postbox">
-                        <h3>Google API Key</h3>
-                        <p>Get it from Google</p>
+                        <h3>Tile Provider</h3>
+                        <select name="tile_provider" id="tile_provider">
+                            <option value="OSM" <?php echo ( 'OSM' == $this->options['tile_provider'] ? 'selected' : '' )?>>Open Street Map</option>
+                            <option value="OSM DE" <?php echo ( 'OSM DE' == $this->options['tile_provider'] ? 'selected' : '' )?>>German Open Street Map</option>
+                            <option value="google<?php echo ( 'google' == $this->options['tile_provider'] ? 'selected' : '' )?>">Google Maps</option>
+                        </select>
+                        <h3>Provider API Key</h3>
+                        <p>If required by your tile provider</p>
                         <ul>
                             <li>
-                                <label for="api_key">Google API Key: </label>
+                                <label for="api_key">API Key: </label>
                                 <input id="api_key" type="text" size="40" name="api_key" value="<?php echo $this->options['api_key']; ?>" />
                             </li>
                             <li>
@@ -342,6 +391,12 @@ if (!class_exists("BMLTMeetingMap")) {
             $parts = parse_url($this->options['root_server']);
             if (isset($parts['scheme']) && isset($parts['host']) && isset($parts['path'])) {
                 $this->options['root_server'] = $parts['scheme'].'://'.$parts['host'].$parts['path'];
+            }
+            if (!isset($this->options['tile_provider'])) {
+                $this->options['tile_provider'] = 'google';
+            }
+            if (!isset($this->options['nominatim_url'])) {
+                $this->options['nominatim_url'] = 'https://nominatim.openstreetmap.org/';
             }
         }
         /**
@@ -496,19 +551,22 @@ if (!class_exists("BMLTMeetingMap")) {
         public function configure_javascript($translate, $query_string, $lang_enum)
         {
 		    // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+            $this->enhanceTileProvider();
             $options = $this->options;
             $gKey = '';
             
             if (isset($options['api_key']) && ('' != $options['api_key']) && ('INVALID' != $options['api_key'])) {
                 $gKey = $options['api_key'];
             }
-            
+            $ret = '';
+            if ($this->options['tile_provider']=='google') {
             // Include the Google Maps API files.
-            $ret = '<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=geometry&key='.$gKey;
-            if (isset($options['region_bias']) && $options['region_bias']) {
-                $ret .= '&region='.strtoupper($options['region_bias']);
+                $ret = '<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=geometry&key='.$gKey;
+                if (isset($options['region_bias']) && $options['region_bias']) {
+                   $ret .= '&region='.strtoupper($options['region_bias']);
+                }
+                $ret .= '"></script>';
             }
-            $ret .= '"></script>';
             // Declare the various globals and display strings. This is how we pass strings to the JavaScript, as opposed to the clunky way we do it in the root server.
             $ret .= '<script type="text/javascript">' . (defined('_DEBUG_MODE_') ? "\n" : '');
             $ret .= 'var c_g_no_meetings_found = "'.htmlspecialchars($translate['NO_MEETINGS']).'";';
@@ -526,9 +584,9 @@ if (!class_exists("BMLTMeetingMap")) {
             $ret .= 'var c_g_menu_tooltip = "'.htmlspecialchars($translate['MENU_TOOLTIP']).'";';
             
             $ret .= 'var c_BMLTPlugin_files_uri = \''.htmlspecialchars($this->get_plugin_path()).'?\';' . (defined('_DEBUG_MODE_') ? "\n" : '');
-            $ret .= "var c_g_BMLTPlugin_images = '".htmlspecialchars($this->get_plugin_path()."/google_map_images")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
+            $ret .= "var c_g_BMLTPlugin_images = '".htmlspecialchars($this->get_plugin_path()."/map_images")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
             $ret .= "var c_g_BMLTPlugin_lang_dir = '".htmlspecialchars($this->get_plugin_path()."/lang")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
-            $ret .= "var c_g_BMLTPlugin_throbber_img_src = '".htmlspecialchars($this->get_plugin_path()."/google_map_images/Throbber.gif")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
+            $ret .= "var c_g_BMLTPlugin_throbber_img_src = '".htmlspecialchars($this->get_plugin_path()."/map_images/Throbber.gif")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
             $ret .= 'var c_g_map_link_text = "'.htmlspecialchars($translate['OPEN_GOOGLE']).'";';
             $ret .= 'var c_g_region = "'.$options['region_bias'].'";';
             $ret .= 'var c_g_bounds = {';
@@ -538,7 +596,13 @@ if (!class_exists("BMLTMeetingMap")) {
                 $ret .= ' "west": "'.$this->options['bounds_west'].'"';
             $ret .= '};';
             $ret .= 'var c_g_time_format = "'.$this->options['time_format'].'";';
-            
+            $ret .= 'var c_g_tileUrl = "'.$this->options['tile_url'].'";';
+            $ret .= 'var c_g_nominatimUrl = "'.$this->options['nominatim_url'].'";';
+            $ret .= 'var c_g_tileOptions = {';
+            foreach($this->options['tile_params'] as $key=>$value) {
+                $ret .= " '".$key."': '".$value."',";
+            }
+            $ret .= '};';
             $ret .= '</script>';
             $ret .= '<style type="text/css">.onoffswitch-inner:before {
     content: "'.$translate["Next_24_hours"].'";
