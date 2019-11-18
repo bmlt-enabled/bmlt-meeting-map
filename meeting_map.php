@@ -34,42 +34,43 @@ if (!class_exists("BMLTMeetingMap")) {
                 ));
             }
         }
-        public function enhanceTileProvider() {
-            switch($this->options['tile_provider']) {
-            case 'MapBox':
-                $this->options['tile_url'] = 
+        public function enhanceTileProvider()
+        {
+            switch ($this->options['tile_provider']) {
+                case 'MapBox':
+                    $this->options['tile_url'] =
                     'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}';
-                $this->options['tile_params'] = array(
+                    $this->options['tile_params'] = array(
                     'attribution'   => 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
                     'id'            => 'mapbox.streets',
                     'accessToken'   => $this->options['api_key']
-                );
-                break;
-            case "OSM DE":
-                $this->options['tile_url'] = 
+                    );
+                    break;
+                case "OSM DE":
+                    $this->options['tile_url'] =
                     'https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png';
-                $this->options['tile_params'] = array(
+                    $this->options['tile_params'] = array(
                     'attribution'   => 'Map data &copy; <a href="https://www.openstreetmap.de/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
                     "maxZoom"       => '18',
                     //'subdomains'    => '["a","b","c"]'
-                );
-                break;
-            case custom:
-                // http://tileserver.maptiler.com/campus/{z}/{x}/{y}.png
-                $this->options['tile_params'] = array(
+                    );
+                    break;
+                case custom:
+                    // http://tileserver.maptiler.com/campus/{z}/{x}/{y}.png
+                    $this->options['tile_params'] = array(
                     'attribution'   => $this->options['tile_attribution'],
                     "maxZoom"       => '18',
-                );
-                break;
-            case "OSM":
-            default:
-                $this->options['tile_url'] = 
+                    );
+                    break;
+                case "OSM":
+                default:
+                    $this->options['tile_url'] =
                     'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-                $this->options['tile_params'] = array(
+                    $this->options['tile_params'] = array(
                     'attribution'   => 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
                     "maxZoom"       => '18',
-                );
-                break;
+                    );
+                    break;
             }
         }
         // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
@@ -120,7 +121,6 @@ if (!class_exists("BMLTMeetingMap")) {
         {
             wp_enqueue_script('jquery');
             wp_enqueue_script("admin", plugin_dir_url(__FILE__) . "js/admin.js", false, filemtime(plugin_dir_path(__FILE__) . "js/admin.js"), true);
-
         }
         /**
          * @desc Adds JS/CSS to the header
@@ -143,7 +143,7 @@ if (!class_exists("BMLTMeetingMap")) {
                     //wp_enqueue_script("geocoder", plugin_dir_url(__FILE__) . "js/nominatim.js", false, filemtime(plugin_dir_path(__FILE__) . "js/nominatim.js"), false);
                     wp_enqueue_script("osmDelegate", plugin_dir_url(__FILE__) . "js/osmDelegate.js", false, filemtime(plugin_dir_path(__FILE__) . "js/osmDelegate.js"), false);
                     wp_enqueue_script("meeting_map", plugin_dir_url(__FILE__) . "js/meeting_map.js", false, filemtime(plugin_dir_path(__FILE__) . "js/meeting_map.js"), false);
-                } 
+                }
             }
         }
         public function testRootServer($root_server)
@@ -460,7 +460,7 @@ if (!class_exists("BMLTMeetingMap")) {
             if (!isset($this->options['lang'])) {
                 $this->options['lang'] = 'en';
             }
-            if (!isset($this->options['nominatim_url']) 
+            if (!isset($this->options['nominatim_url'])
             ||  empty($this->options['nominatim_url'])) {
                 $this->options['nominatim_url'] = 'https://nominatim.openstreetmap.org/';
             }
@@ -590,7 +590,7 @@ if (!class_exists("BMLTMeetingMap")) {
             // Include the Google Maps API files.
                 $ret = '<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=geometry&key='.$gKey;
                 if (isset($options['region_bias']) && $options['region_bias']) {
-                   $ret .= '&region='.strtoupper($options['region_bias']);
+                    $ret .= '&region='.strtoupper($options['region_bias']);
                 }
                 $ret .= '"></script>';
             }
@@ -626,7 +626,7 @@ if (!class_exists("BMLTMeetingMap")) {
             $ret .= 'var c_g_tileUrl = "'.$this->options['tile_url'].'";';
             $ret .= 'var c_g_nominatimUrl = "'.$this->options['nominatim_url'].'";';
             $ret .= 'var c_g_tileOptions = {';
-            foreach($this->options['tile_params'] as $key=>$value) {
+            foreach ($this->options['tile_params'] as $key => $value) {
                 $ret .= " '".$key."': '".$value."',";
             }
             $ret .= '};';
