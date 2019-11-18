@@ -45,15 +45,6 @@ if (!class_exists("BMLTMeetingMap")) {
                     'accessToken'   => $this->options['api_key']
                 );
                 break;
-            case "OSM":
-                $this->options['tile_url'] = 
-                    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-                $this->options['tile_params'] = array(
-                    'attribution'   => 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
-                    //'subdomains'    => '["a","b","c"]'
-                );
-                break;
-            default:
             case "OSM DE":
                 $this->options['tile_url'] = 
                     'https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png';
@@ -63,7 +54,22 @@ if (!class_exists("BMLTMeetingMap")) {
                     //'subdomains'    => '["a","b","c"]'
                 );
                 break;
-               // http://tileserver.maptiler.com/campus/{z}/{x}/{y}.png
+            case custom:
+                // http://tileserver.maptiler.com/campus/{z}/{x}/{y}.png
+                $this->options['tile_params'] = array(
+                    'attribution'   => $this->options['tile_attribution'],
+                    "maxZoom"       => '18',
+                );
+                break;
+            case "OSM":
+            default:
+                $this->options['tile_url'] = 
+                    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+                $this->options['tile_params'] = array(
+                    'attribution'   => 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+                    "maxZoom"       => '18',
+                );
+                break;
             }
         }
         // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
@@ -201,6 +207,8 @@ if (!class_exists("BMLTMeetingMap")) {
                 $this->options['lang'] = sanitize_text_field($_POST['lang']);
                 $this->options['tile_provider'] = sanitize_text_field($_POST['tile_provider']);
                 $this->options['nominatim_url'] = sanitize_text_field($_POST['nominatim_url']);
+                $this->options['tile_url'] = sanitize_text_field($_POST['tile_url']);
+                $this->options['tile_attribution'] = wp_kses_post(stripslashes($_POST['tile_attribution']));
                 if (empty($this->options['nominatim_url'])) {
                     $this->options['nominatim_url'] = 'https://nominatim.openstreetmap.org/';
                 }
@@ -250,6 +258,9 @@ if (!class_exists("BMLTMeetingMap")) {
                         <div id="custom_tile_provider">
                             <label for="tile_url">URL for tiles: </label>
                             <input id="tile_url" type="text" size="60" name="tile_url" value="<?php echo $this->options['tile_url']; ?>" />
+                            <br>
+                            <label for="tile_attribution">Attribution: </label>
+                            <input id="tile_attribution" type="text" size="60" name="tile_attribution" value="<?php echo esc_html($this->options['tile_attribution']); ?>" />
                         </div>
                         <div id="api_key_div">
                             <label for="api_key">API Key: </label>
