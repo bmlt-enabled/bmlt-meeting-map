@@ -39,6 +39,10 @@ This plugin is appropriate for small and medium sized regions.  The meetings tra
 3. Filter the meetings by language, format, or weekday
 
 == Changelog ==
+= 2.0.0 =
+* User can choose between OSM and Google Maps as source of mapping data.
+* 
+
 = 1.0.6 =
 * Added Italian Translation
 

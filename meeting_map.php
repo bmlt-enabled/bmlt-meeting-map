@@ -112,6 +112,9 @@ if (!class_exists("BMLTMeetingMap")) {
         // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
         public function enqueue_backend_files($hook)
         {
+            wp_enqueue_script('jquery');
+            wp_enqueue_script("admin", plugin_dir_url(__FILE__) . "js/admin.js", false, filemtime(plugin_dir_path(__FILE__) . "js/admin.js"), true);
+
         }
         /**
          * @desc Adds JS/CSS to the header
@@ -197,6 +200,10 @@ if (!class_exists("BMLTMeetingMap")) {
                 $this->options['time_format'] = intval($_POST['time_format']);
                 $this->options['lang'] = sanitize_text_field($_POST['lang']);
                 $this->options['tile_provider'] = sanitize_text_field($_POST['tile_provider']);
+                $this->options['nominatim_url'] = sanitize_text_field($_POST['nominatim_url']);
+                if (empty($this->options['nominatim_url'])) {
+                    $this->options['nominatim_url'] = 'https://nominatim.openstreetmap.org/';
+                }
                 $this->save_admin_options();
                 set_transient('admin_notice', 'Please put down your weapon. You have 20 seconds to comply.');
                 echo '<div class="updated"><p>Success! Your changes were successfully saved!</p></div>';
@@ -237,17 +244,25 @@ if (!class_exists("BMLTMeetingMap")) {
                         <select name="tile_provider" id="tile_provider">
                             <option value="OSM" <?php echo ( 'OSM' == $this->options['tile_provider'] ? 'selected' : '' )?>>Open Street Map</option>
                             <option value="OSM DE" <?php echo ( 'OSM DE' == $this->options['tile_provider'] ? 'selected' : '' )?>>German Open Street Map</option>
-                            <option value="google<?php echo ( 'google' == $this->options['tile_provider'] ? 'selected' : '' )?>">Google Maps</option>
+                            <option value="google" <?php echo ( 'google' == $this->options['tile_provider'] ? 'selected' : '' )?>>Google Maps</option>
+                            <option value="custom" <?php echo ( 'custom' == $this->options['tile_provider'] ? 'selected' : '' )?>>Custom</option>
                         </select>
-                        <h3>Provider API Key</h3>
-                        <p>If required by your tile provider</p>
+                        <div id="custom_tile_provider">
+                            <label for="tile_url">URL for tiles: </label>
+                            <input id="tile_url" type="text" size="60" name="tile_url" value="<?php echo $this->options['tile_url']; ?>" />
+                        </div>
+                        <div id="api_key_div">
+                            <label for="api_key">API Key: </label>
+                            <input id="api_key" type="text" size="40" name="api_key" value="<?php echo $this->options['api_key']; ?>" />
+                        </div>
+                        <h3>GeoCoding Parameters</h3>
+                        <div id="nominatim_div">
+                            <label for="nominatim_url">Nominatim URL: </label>
+                            <input id="nominatim_url" type="text" size="40" name="nominatim_url" value="<?php echo $this->options['nominatim_url']; ?>" />
+                        </div>
                         <ul>
                             <li>
-                                <label for="api_key">API Key: </label>
-                                <input id="api_key" type="text" size="40" name="api_key" value="<?php echo $this->options['api_key']; ?>" />
-                            </li>
-                            <li>
-                                <label for="region_bias">Google Region (optional): </label>
+                                <label for="region_bias">Region/ Country Code (optional): </label>
                                 <input id="region_bias" type="text" size="2" name="region_bias" value="<?php echo $this->options['region_bias']; ?>" />
                             </li>
                             <li>
@@ -347,9 +362,6 @@ if (!class_exists("BMLTMeetingMap")) {
                     </div>
                 </div>
             </div>
-            <script>
-            getValueSelected();
-            </script>
             <?php
         }
         /**
@@ -436,6 +448,10 @@ if (!class_exists("BMLTMeetingMap")) {
             }
             if (!isset($this->options['lang'])) {
                 $this->options['lang'] = 'en';
+            }
+            if (!isset($this->options['nominatim_url']) 
+            ||  empty($this->options['nominatim_url'])) {
+                $this->options['nominatim_url'] = 'https://nominatim.openstreetmap.org/';
             }
             extract($att = shortcode_atts(array(
                 'lat' => $this->options['lat'],
