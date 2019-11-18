@@ -12,7 +12,9 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 == Description ==
 
-The BMLT Meeting Map provides a GoogleMaps UI allowing users to find meetings stored in a the Basic Meeting List Toolbox (BMLT) Server.
+The BMLT Meeting Map provides a map so people can find NA meetings stored in a the Basic Meeting List Toolbox (BMLT) Server.
+The map tiles can come from Open Street Maps, from Google Maps or from a local server or proxy,
+depending on the privacy concerns or the users.
 Simply put the shortcode [bmlt_meeting_map] into a WordPress page and a map will be generated where nearby meetings are marked.
 Click on a meeting location, and the details of all the meetings will pop up.  The display is responsive, suitible for mobile and
 computers.  Panning (or zooming) in the map displays meeting there, or you may search for a different location using geocoding.
