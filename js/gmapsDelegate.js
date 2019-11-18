@@ -122,6 +122,9 @@
         function contains(bounds, lat, lng) {
            return bounds.contains(new google.maps.LatLng ( lat, lng));
         }
+        function getBounds() {
+            return g_main_map.getBounds();
+        }
         function fromLatLngToPoint(lat, lng) {
             var latLng = new google.maps.LatLng ( lat, lng);
             var scale = 1 << g_main_map.getZoom();
@@ -347,6 +350,7 @@
         this.setZoom = setZoom;
         this.createMarker = createMarker;
         this.contains = contains;
+        this.getBounds = getBounds;
     }
     MapDelegate.prototype.createMap = null;
     MapDelegate.prototype.addListener = null;
@@ -358,3 +362,4 @@
     MapDelegate.prototype.setZoom = null;
     MapDelegate.prototype.createMarker = null;
     MapDelegate.prototype.contains = null;
+    MapDelegate.prototype.getBounds = null;

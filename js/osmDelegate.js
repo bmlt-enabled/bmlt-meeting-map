@@ -258,6 +258,9 @@ function addControl(div,pos) {
 	function contains(bounds, lat, lng) {
 		return bounds.contains(L.latLng ( lat, lng ));
 	}
+	function getBounds() {
+		return g_main_map.getBounds();
+	}
     this.createMap = createMap;
     this.addListener = addListener;
     this.addControl = addControl;
@@ -268,6 +271,7 @@ function addControl(div,pos) {
 	this.setZoom = setZoom;
 	this.createMarker = createMarker;
 	this.contains = contains;
+	this.getBounds = getBounds;
 }
 MapDelegate.prototype.createMap = null;
 MapDelegate.prototype.addListener = null;
@@ -279,3 +283,4 @@ MapDelegate.prototype.callGeocoder = null;
 MapDelegate.prototype.setZoom = null;
 MapDelegate.prototype.createMarker = null;
 MapDelegate.prototype.contains = null;
+MapDelegate.prototype.getBounds = null;

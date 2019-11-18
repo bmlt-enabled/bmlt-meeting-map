@@ -395,6 +395,9 @@ function MeetingMap (in_div, in_coords)
  
 		return ret;
 	};
+	function filterVisible() {
+		return filterBounds(g_delegate.getBounds());
+	}
 	function filterBounds(bounds) {
 		var ret = new Array;
 		g_response_object.forEach( function(meeting) {
@@ -785,7 +788,7 @@ function MeetingMap (in_div, in_coords)
     	return c_g_weekdays[meeting.weekday_tinyint] + ' ' + meetingTimes(meeting);
     }
 	function showListView() {
-    	var meetings = filterMeetings(g_delegate.filterVisible());
+    	var meetings = filterMeetings(filterVisible());
     	if (meetings.length == 0) return;
     	var modal = document.getElementById('table_modal');
     	document.getElementById('close_table').addEventListener('click', function() {
