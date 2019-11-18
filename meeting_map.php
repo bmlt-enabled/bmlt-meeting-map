@@ -2,7 +2,7 @@
 /*
 Plugin Name: BMLT Meeting Map
 Description: Simple responsive Meeting Map.
-Author: Ron B
+Author: otrok7
 Version: 2.0.0
 */
 /* Disallow direct access to the plugin file */
