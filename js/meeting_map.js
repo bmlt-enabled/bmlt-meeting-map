@@ -465,31 +465,23 @@ function MeetingMap (in_div, in_coords)
 	    item.innerHTML = c_g_menu_list;
 	    item.style.display = 'block';
 	    item.addEventListener('click', showListView);
-	    dropdownContent.appendChild(item);
-	    var ios = !!navigator.platform && /iPad|iPhone|iPod/.test(navigator.platform);
-	    if (!ios) {
-	    	item = document.createElement('button');
-	    	item.innerHTML = c_g_menu_fullscreen;
-	    	item.style.display = 'block';
-	    	var toggleItem = item;
-	    	item.addEventListener('click', function(){
-	    		if (document.fullscreenElement) {
-	    			document.exitFullscreen();
-	    			toggleItem.innerHTML = c_g_menu_fullscreen;
-	    		} else {
-	    			g_initial_div.parentNode.requestFullscreen();
-	    			toggleItem.innerHTML = c_g_menu_exitFullscreen;
-	    		}
-	    	});
-	    	dropdownContent.appendChild(item);
-	    }
-	    firstChild.addEventListener('click', function(e){
-	    	if (dropdownContent.style.display == "inline-block") 
-	    		dropdownContent.style.display = "none";
-	    	else
-	    		dropdownContent.style.display = "inline-block";
+		dropdownContent.appendChild(item);
+	    item = document.createElement('button');
+	    item.innerHTML = c_g_menu_fullscreen;
+	    item.style.display = 'block';
+	    var toggleItem = item;
+	    item.addEventListener('click', function() {
+	    	toggleFullscreen();
 	    });
-	    firstChild.appendChild(dropdownContent);
+	    dropdownContent.appendChild(item);
+	
+		firstChild.addEventListener('click', function(e){
+	  	 	if (dropdownContent.style.display == "inline-block") 
+	  	 		dropdownContent.style.display = "none";
+	   		else
+	   			dropdownContent.style.display = "inline-block";
+			});
+		firstChild.appendChild(dropdownContent);
 		return controlDiv;
 	}
 	function closeModalWindow(modal) {
@@ -847,6 +839,68 @@ function MeetingMap (in_div, in_coords)
 		  // Show the current tab, and add an "active" class to the button that opened the tab
 		  document.getElementById(name).style.display = "block";
 		  evt.currentTarget.className += " active";
+	}
+	function getContainer() {
+		return g_in_div;
+	}
+	function isFullscreen() {
+		return _isFullscreen || false;
+	}
+
+	function toggleFullscreen(options) {
+		var container = getContainer();
+		if (isFullscreen()) {
+			if (options && options.pseudoFullscreen) {
+				_disablePseudoFullscreen(container);
+			} else if (document.exitFullscreen) {
+				document.exitFullscreen();
+			} else if (document.mozCancelFullScreen) {
+				document.mozCancelFullScreen();
+			} else if (document.webkitCancelFullScreen) {
+				document.webkitCancelFullScreen();
+			} else if (document.msExitFullscreen) {
+				document.msExitFullscreen();
+			} else {
+				_disablePseudoFullscreen(container);
+			}
+		} else {
+			if (options && options.pseudoFullscreen) {
+				_enablePseudoFullscreen(container);
+			} else if (container.requestFullscreen) {
+				container.requestFullscreen();
+			} else if (container.mozRequestFullScreen) {
+				container.mozRequestFullScreen();
+			} else if (container.webkitRequestFullscreen) {
+				container.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+			} else if (container.msRequestFullscreen) {
+				container.msRequestFullscreen();
+			} else {
+				_enablePseudoFullscreen(container);
+			}
+		}
+
+	}
+	function _enablePseudoFullscreen(container) {
+		L.DomUtil.addClass(container, 'leaflet-pseudo-fullscreen');
+		_setFullscreen(true);
+		fire('fullscreenchange');
+	}
+
+	function _disablePseudoFullscreen(container) {
+		L.DomUtil.removeClass(container, 'leaflet-pseudo-fullscreen');
+		_setFullscreen(false);
+		fire('fullscreenchange');
+	}
+	var _isFullscreen;
+	function _setFullscreen (fullscreen) {
+		_isFullscreen = fullscreen;
+		var container = getContainer();
+		if (fullscreen) {
+			L.DomUtil.addClass(container, 'leaflet-fullscreen-on');
+		} else {
+			L.DomUtil.removeClass(container, 'leaflet-fullscreen-on');
+		}
+		invalidateSize();
 	}
 	/****************************************************************************************
 	 *								MAIN FUNCTIONAL INTERFACE								*
