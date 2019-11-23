@@ -27,7 +27,8 @@ function MapDelegate() {
 		popupAnchor:  [12, -32] // point from which the popup should open relative to the iconAnchor
     });
     var	g_allMarkers = [];				///< Holds all the markers.
-    var g_main_map;
+	var g_main_map;
+	var g_tileLayer;
     function createMap(in_div, in_location_coords) {
         if ( in_location_coords ) {
             myOptions = {
@@ -38,8 +39,11 @@ function MapDelegate() {
                 'doubleClickZoom' : false
             };
             g_main_map = new L.Map ( in_div, myOptions );
-            L.tileLayer(c_g_tileUrl,c_g_tileOptions).addTo(g_main_map);
-            g_main_map.zoomControl.setPosition('bottomright');
+            g_tileLayer = L.tileLayer(c_g_tileUrl,c_g_tileOptions).addTo(g_main_map);
+			g_main_map.zoomControl.setPosition('bottomright');
+			g_main_map.on('moveend',function() {
+				g_tileLayer.redraw();
+			});
             return g_main_map;
         }
         return null;
@@ -56,7 +60,10 @@ function MapDelegate() {
 		g_main_map.flyTo(latlng);
         g_main_map.on('moveend', function(ev) {
 			g_main_map.off('moveend');
-            g_main_map.setZoom(getZoomAdjust(false, filterMeetings));
+			g_main_map.setZoom(getZoomAdjust(false, filterMeetings));
+			g_main_map.on('moveend',function() {
+				g_main_map.invalidateSize();
+			});
         });
 	}
 	function clearAllMarkers ( )
@@ -223,43 +230,43 @@ function addControl(div,pos) {
 		}, this)
 		);
     };
-    	/************************************************************************************//**
-	 *	\brief This catches the AJAX response, and fills in the response form.				*
-	 ****************************************************************************************/
-
-	function geoCallback ( in_geocode_response,	///< The JSON object.
-        filterMeetings)
-        {
-            if ( in_geocode_response && in_geocode_response[0] && in_geocode_response[0].bbox ) {
-                g_main_map.flyToBounds ( in_geocode_response[0].bbox );
-                g_main_map.on('moveend', function(ev) {
-					g_main_map.off('moveend');
-                    g_main_map.setZoom(getZoomAdjust(true, filterMeetings));
-                });
-            } else {
-                alert ( c_g_address_lookup_fail );
-            };
-		};
-        function callGeocoder(in_loc, filterMeetings) {
-			geoCodeParams = {};
-			if (c_g_region.trim() !== '') {
-				geoCodeParams.countrycodes = c_g_region;
-			}
-			if (c_g_bounds
+ 	function geoCallback ( in_geocode_response,	filterMeetings) {
+        if ( in_geocode_response && in_geocode_response[0] && in_geocode_response[0].bbox ) {
+            g_main_map.flyToBounds ( in_geocode_response[0].bbox );
+            g_main_map.on('moveend', function(ev) {
+				g_main_map.off('moveend');
+				g_main_map.setZoom(getZoomAdjust(true, filterMeetings));
+				g_main_map.on('moveend',function() {
+					g_tileLayer.redraw();
+				});
+			});
+        } else {
+            alert ( c_g_address_lookup_fail );
+        };
+	};
+    function callGeocoder(in_loc, filterMeetings) {
+		geoCodeParams = {};
+		if (c_g_region.trim() !== '') {
+			geoCodeParams.countrycodes = c_g_region;
+		}
+		if (c_g_bounds
 			&&  c_g_bounds.north && c_g_bounds.north.trim()!== ''
 			&&  c_g_bounds.east && c_g_bounds.east.trim()!== ''
 			&&  c_g_bounds.south && c_g_bounds.south.trim()!== ''
 			&&  c_g_bounds.west && c_g_bounds.west.trim()!== '') {
 				geoCodeParams.viewbox = c_g_bounds.south+","+c_g_bounds.west+","+
 					                    c_g_bounds.north+","+c_g_bounds.east;
-			}
-            var	geocoder = geocode(in_loc, geoCodeParams, geoCallback, filterMeetings);
-        }
+		}
+        var	geocoder = geocode(in_loc, geoCodeParams, geoCallback, filterMeetings);
+    }
 	function contains(bounds, lat, lng) {
 		return bounds.contains(L.latLng ( lat, lng ));
 	}
 	function getBounds() {
 		return g_main_map.getBounds();
+	}
+	function invalidateSize() {
+		g_main_map.invalidateSize();
 	}
     this.createMap = createMap;
     this.addListener = addListener;
@@ -272,6 +279,7 @@ function addControl(div,pos) {
 	this.createMarker = createMarker;
 	this.contains = contains;
 	this.getBounds = getBounds;
+	this.invalidateSize = invalidateSize;
 }
 MapDelegate.prototype.createMap = null;
 MapDelegate.prototype.addListener = null;
@@ -284,3 +292,4 @@ MapDelegate.prototype.setZoom = null;
 MapDelegate.prototype.createMarker = null;
 MapDelegate.prototype.contains = null;
 MapDelegate.prototype.getBounds = null;
+MapDelegate.prototype.invalidateSize = null;

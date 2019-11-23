@@ -843,15 +843,21 @@ function MeetingMap (in_div, in_coords)
 	function getContainer() {
 		return g_in_div;
 	}
+	var _isPseudoFullscreen = false;
 	function isFullscreen() {
-		return _isFullscreen || false;
-	}
+		var fullscreenElement =
+		document.fullscreenElement ||
+		document.mozFullScreenElement ||
+		document.webkitFullscreenElement ||
+		document.msFullscreenElement;
 
+		return (fullscreenElement === getContainer()) || _isPseudoFullscreen;
+	}
 	function toggleFullscreen(options) {
 		var container = getContainer();
 		if (isFullscreen()) {
 			if (options && options.pseudoFullscreen) {
-				_disablePseudoFullscreen(container);
+				_setFullscreen(false);
 			} else if (document.exitFullscreen) {
 				document.exitFullscreen();
 			} else if (document.mozCancelFullScreen) {
@@ -865,7 +871,7 @@ function MeetingMap (in_div, in_coords)
 			}
 		} else {
 			if (options && options.pseudoFullscreen) {
-				_enablePseudoFullscreen(container);
+				_setFullscreen(true);
 			} else if (container.requestFullscreen) {
 				container.requestFullscreen();
 			} else if (container.mozRequestFullScreen) {
@@ -878,29 +884,17 @@ function MeetingMap (in_div, in_coords)
 				_enablePseudoFullscreen(container);
 			}
 		}
-
 	}
-	function _enablePseudoFullscreen(container) {
-		L.DomUtil.addClass(container, 'leaflet-pseudo-fullscreen');
-		_setFullscreen(true);
-		fire('fullscreenchange');
-	}
-
-	function _disablePseudoFullscreen(container) {
-		L.DomUtil.removeClass(container, 'leaflet-pseudo-fullscreen');
-		_setFullscreen(false);
-		fire('fullscreenchange');
-	}
-	var _isFullscreen;
+	var _isPseudoFullscreen = false;
 	function _setFullscreen (fullscreen) {
-		_isFullscreen = fullscreen;
+		_isPseudoFullscreen = fullscreen;
 		var container = getContainer();
 		if (fullscreen) {
-			L.DomUtil.addClass(container, 'leaflet-fullscreen-on');
+			L.DomUtil.addClass(container, 'leaflet-pseudo-fullscreen');
 		} else {
-			L.DomUtil.removeClass(container, 'leaflet-fullscreen-on');
+			L.DomUtil.removeClass(container, 'leaflet-pseudo-fullscreen');
 		}
-		invalidateSize();
+		g_delegate.invalidateSize();
 	}
 	/****************************************************************************************
 	 *								MAIN FUNCTIONAL INTERFACE								*

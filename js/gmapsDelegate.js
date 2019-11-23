@@ -340,6 +340,8 @@
                 alert ( c_g_server_error );
             };
         }
+        function invalidateSize() {
+        }
         this.createMap = createMap;
         this.addListener = addListener;
         this.addControl = addControl;
@@ -351,6 +353,7 @@
         this.createMarker = createMarker;
         this.contains = contains;
         this.getBounds = getBounds;
+        this.invalidateSize = invalidateSize;
     }
     MapDelegate.prototype.createMap = null;
     MapDelegate.prototype.addListener = null;
@@ -363,3 +366,4 @@
     MapDelegate.prototype.createMarker = null;
     MapDelegate.prototype.contains = null;
     MapDelegate.prototype.getBounds = null;
+    MapDelegate.prototype.invalidateSize = null;
