@@ -3,7 +3,7 @@
 Contributors: otrok7
 Tags: na, meeting list, meeting finder, maps, recovery, addiction, webservant, bmlt
 Requires at least: 5.1
-Tested up to: 5.2
+Tested up to: 5.3
 Requires PHP: 7.0
 Stable tag: 2.0.0
 License: GPLv2 or later
@@ -42,8 +42,10 @@ This plugin is appropriate for small and medium sized regions.  The meetings tra
 
 == Changelog ==
 = 2.0.0 =
-* User can choose between OSM and Google Maps as source of mapping data.
-* 
+* Choose between OSM and Google Maps framework mapping data. It is also possible to host
+your on map tiles.  This is important for (EU) countries with strict rules regarding
+data privacy.  OSM framework (Leaflet) offers much better performance.
+* UI stability improvements
 
 = 1.0.6 =
 * Added Italian Translation
