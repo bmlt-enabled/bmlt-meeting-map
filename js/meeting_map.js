@@ -1,32 +1,19 @@
-function MeetingMap (
-		in_div,
-		in_coords
-)
+function MeetingMap (in_div, in_coords)
 {
 	/****************************************************************************************
 	 *										CLASS VARIABLES									*
 	 ****************************************************************************************/
-	var	g_main_map = null;				///< This will hold the Google Map object.
-	var	g_allMarkers = [];				///< Holds all the markers.
-	var g_initial_call = false;         ///< Set to true, once we have zoomed in.
-	var g_initial_coords = in_coords;
-	var g_initial_div = in_div;
+	var g_in_div = in_div;
 	var g_next24hours = false;
 	var g_filterHaving = null;
 	var g_filterWeekday = null;
 	var g_filterNotHaving = null;
 
-	/// These describe the regular NA meeting icon
-	var g_icon_image_single = new google.maps.MarkerImage ( c_g_BMLTPlugin_images+"/NAMarker.png", new google.maps.Size(23, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
-	var g_icon_image_multi = new google.maps.MarkerImage ( c_g_BMLTPlugin_images+"/NAMarkerG.png", new google.maps.Size(23, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
-	var g_icon_image_selected = new google.maps.MarkerImage ( c_g_BMLTPlugin_images+"/NAMarkerSel.png", new google.maps.Size(23, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
-	var g_icon_shadow = new google.maps.MarkerImage( c_g_BMLTPlugin_images+"/NAMarkerS.png", new google.maps.Size(43, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
-	var g_icon_shape = { coord: [16,0,18,1,19,2,20,3,21,4,21,5,22,6,22,7,22,8,22,9,22,10,22,11,22,12,22,13,22,14,22,15,22,16,21,17,21,18,22,19,20,20,19,21,20,22,18,23,17,24,18,25,17,26,15,27,14,28,15,29,12,30,12,31,10,31,10,30,9,29,8,28,8,27,7,26,6,25,5,24,5,23,4,22,3,21,3,20,2,19,1,18,1,17,1,16,0,15,0,14,0,13,0,12,0,11,0,10,0,9,0,8,0,7,1,6,1,5,2,4,2,3,3,2,5,1,6,0,16,0], type: 'poly' };
+	var g_delegate = new MapDelegate();
 
-	/****************************************************************************************
-	 *									GOOGLE MAPS STUFF									*
-	 ****************************************************************************************/
-
+	var g_response_object = null;
+	var g_format_hash = null;
+	
 	/************************************************************************************//**
 	 *	\brief Load the map and set it up.													*
 	 ****************************************************************************************/
@@ -37,52 +24,19 @@ function MeetingMap (
 		{
 			in_div.myThrobber = null;
 
-			if ( in_location_coords )
-			{
-				var myOptions = {
-						'center': new google.maps.LatLng ( in_location_coords.latitude, in_location_coords.longitude ),
-						'zoom': in_location_coords.zoom,
-						'mapTypeId': google.maps.MapTypeId.ROADMAP,
-						'zoomControl': true,
-						'minZoom': 6,
-						'mapTypeControl': false,
-						'streetViewControl': false,
-						'disableDoubleClickZoom' : true,
-						'draggableCursor': "pointer",
-						'scaleControl' : true,
-						'fullscreenControl': false,
-//						'fullscreenControlOptions' : {
-//					        position: google.maps.ControlPosition.TOP_RIGHT
-//						}
-				};
-
-				var	pixel_width = in_div.offsetWidth;
-				var	pixel_height = in_div.offsetHeight;
-				
-				if ( (pixel_width < 640) || (pixel_height < 640) )
-				{
-					myOptions.scrollwheel = true;
-					myOptions.zoomControlOptions = { 'style': google.maps.ZoomControlStyle.SMALL };
-				}
-				else
-				{
-					myOptions.zoomControlOptions = { 'style': google.maps.ZoomControlStyle.LARGE };
-				};
-				g_main_map = new google.maps.Map ( in_div, myOptions );
-			};
-
-			if ( g_main_map )
+			if ( g_delegate.createMap(in_div, in_location_coords) )
 			{
 				create_throbber(in_div);
-				google.maps.event.addListener( g_main_map, 'zoom_changed', function(ev){
-					if ( g_main_map.response_object &&
-							g_main_map.format_hash) {
+				g_delegate.addListener('zoomend', function(ev){
+					if ( g_response_object &&
+							g_format_hash) {
 						search_response_callback();
 					}
-				});
+				},false);
 				show_throbber();
-				addFilterMeetingsToggle(g_main_map);
-				addMenuButton(g_main_map, pixel_width);
+				var	pixel_width = in_div.offsetWidth;
+				g_delegate.addControl(createFilterMeetingsToggle(),'topleft');
+				g_delegate.addControl(createMenuButton(pixel_width),'topright');
 			};
 		};
 	};
@@ -91,78 +45,58 @@ function MeetingMap (
 	 *	\brief 
 	 ****************************************************************************************/
 
-	function create_throbber ( in_div    ///< The container div for the throbber.
-	)
-	{
-		if ( !g_main_map.myThrobber )
-		{
-			g_main_map.myThrobber = document.createElement("div");
-			if ( g_main_map.myThrobber )
-			{
-				g_main_map.myThrobber.id = in_div.id+'_throbber_div';
-				g_main_map.myThrobber.className = 'bmlt_map_throbber_div';
-				g_main_map.myThrobber.style.display = 'none';
-				in_div.appendChild ( g_main_map.myThrobber );
+	function create_throbber ( in_div )	{
+		if ( !in_div.myThrobber ) {
+			in_div.myThrobber = document.createElement("div");
+			if ( in_div.myThrobber ) {
+				in_div.myThrobber.id = in_div.id+'_throbber_div';
+				in_div.myThrobber.className = 'bmlt_map_throbber_div';
+				in_div.myThrobber.style.display = 'none';
+				in_div.appendChild ( in_div.myThrobber );
 				var img = document.createElement("img");
 
-				if ( img )
-				{
+				if ( img ) {
 					img.src = c_g_BMLTPlugin_throbber_img_src;
 					img.className = 'bmlt_map_throbber_img';
 					img.id = in_div.id+'_throbber_img';
 					img.alt = 'AJAX Throbber';
-					g_main_map.myThrobber.appendChild ( img );
-				}
-				else
-				{
+					in_div.myThrobber.appendChild ( img );
+				} else {
 					in_div.myThrobber = null;
 				};
 			};
 		};
 	};
-
-	/************************************************************************************//**
-	 *	\brief 
-	 ****************************************************************************************/
-
-	function show_throbber()
-	{
-		if ( g_main_map.myThrobber )
-		{
-			g_main_map.myThrobber.style.display = 'block';
+	function show_throbber() {
+		if ( g_in_div.myThrobber ) {
+			g_in_div.myThrobber.style.display = 'block';
 		};
 	};
-
-	/************************************************************************************//**
-	 *	\brief 
-	 ****************************************************************************************/
-
 	function hide_throbber()
 	{
-		if ( g_main_map.myThrobber )
-		{
-			g_main_map.myThrobber.style.display = 'none';
+		if ( g_in_div.myThrobber ) {
+			g_in_div.myThrobber.style.display = 'none';
 		};
 	};
 	function loadAllMeetings(meetings_response_object,formats_response_object,centerMe,goto) {
-		g_main_map.response_object = meetings_response_object;
-		g_main_map.format_hash = create_format_hash(formats_response_object);
+		g_response_object = meetings_response_object;
+		g_format_hash = create_format_hash(formats_response_object);
 		search_response_callback();
 		if (centerMe != 0) {
 	        if(navigator.geolocation) {
-	            navigator.geolocation.getCurrentPosition(function(position) {
-	                var latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-	                g_main_map.setCenter(latlng);
-	                g_main_map.setZoom(getZoomAdjust(false));
-				},
-				function() {
-					showSearchDialog(null);
-				});
+	            navigator.geolocation.getCurrentPosition(
+					function(position) {
+						g_delegate.setViewToPosition(position,filterMeetingsAndBounds);
+					},
+					function() {
+						showSearchDialog(null);
+					}
+				);
 	        } else {
 				showSearchDialog(null);
 			}
 		} else if (goto != '') {
-			callGeocoder(goto);
+			callGeocoder(goto, filterMeetingsAndBounds);
 		} 
 		hide_throbber();
 	}
@@ -193,26 +127,18 @@ function MeetingMap (
 		});
 		return ret;
 	}
-	/************************************************************************************//**
-	 *	\brief 
-	 ****************************************************************************************/
-
-	function search_response_callback()
-	{
-		if ( !g_main_map.response_object.length )
-		{
+	function search_response_callback() {
+		if ( !g_response_object.length ) {
 			alert ( g_no_meetings_found );
 			return;
 		};
-
 		try {
 			draw_markers();
 		} catch (e) {
-			google.maps.event.addListenerOnce( g_main_map, 'bounds_changed', function(ev){
-					draw_markers();
-			});
+			g_delegate.addListener( 'projection_changed', function(ev){
+				draw_markers();
+			},true);
 		}
-
 	};
 
 
@@ -220,107 +146,18 @@ function MeetingMap (
 	 *									CREATING MARKERS									*
 	 ****************************************************************************************/
 
-	/************************************************************************************//**
-	 *	\brief Remove all the markers.														*
-	 ****************************************************************************************/
-	function clearAllMarkers ( )
-	{
-		if ( g_allMarkers )
-		{
-
-			for ( var c = 0; c < g_allMarkers.length; c++ )
-			{
-				if ( g_allMarkers[c].info_win_ )
-				{
-					g_allMarkers[c].info_win_.close();
-					g_allMarkers[c].info_win_ = null;
-				};
-
-				g_allMarkers[c].setMap( null );
-				g_allMarkers[c] = null;
-			};
-
-			g_allMarkers.length = 0;
-		};
-	};
-
-	/************************************************************************************//**
-	 *	\brief Calculate and draw the markers.												*
-	 ****************************************************************************************/
-
-	function draw_markers()
-	{
-		clearAllMarkers();
+	function draw_markers() {
+		g_delegate.clearAllMarkers();
 
 		// This calculates which markers are the red "multi" markers.
-		var overlap_map = mapOverlappingMarkersInCity ( filterMeetings(g_main_map.response_object) );
+		var overlap_map = mapOverlappingMarkersInCity ( filterMeetings(g_response_object) );
 
 		// Draw the meeting markers.
 		overlap_map.forEach ( function(marker) {
 			createMapMarker ( marker );
 		});
-		//makeVisible();
+	};
 
-	};
-	function getZoomAdjust($only_out) {
-		if (!g_main_map) return 12;
-		var ret = g_main_map.getZoom();
-		var center = g_main_map.getCenter();
-		var bounds = g_main_map.getBounds();
-		var zoomedOut = false;
-		while(filterMeetings(filterBounds(bounds)).length==0 && ret>6) {
-			zoomedOut = true;
-			// no exact, because earth is curved
-			ret -= 1;
-			var ne = new google.maps.LatLng({
-				lat: (2*bounds.getNorthEast().lat())-center.lat(),
-				lng: (2*bounds.getNorthEast().lng())-center.lng()});
-			var sw = new google.maps.LatLng({
-				lat: (2*bounds.getSouthWest().lat())-center.lat(),
-			    lng: (2*bounds.getSouthWest().lng())-center.lng()});
-			bounds = new google.maps.LatLngBounds(sw,ne);
-		}
-		if (!$only_out && !zoomedOut && ret<12) {
-			var knt = filterMeetings(filterBounds(bounds)).length;
-			while(ret<12 && knt>0) {
-				// no exact, because earth is curved
-				ret += 1;
-				var ne = new google.maps.LatLng({
-					lat: 0.5*(bounds.getNorthEast().lat()+center.lat()),
-					lng: 0.5*(bounds.getNorthEast().lng()+center.lng())});
-				var sw = new google.maps.LatLng({
-					lat: 0.5*(bounds.getSouthWest().lat()+center.lat()),
-					lng: 0.5*(bounds.getSouthWest().lng()+center.lng())});
-				bounds = new google.maps.LatLngBounds(sw,ne);
-				knt = filterMeetings(filterBounds(bounds)).length;
-			}
-			if (knt == 0) {
-				ret -= 1;
-			}
-		} 
-		return ret;
-	}
-	function filterVisible() {
-		if (g_main_map) {
-			var bounds = g_main_map.getBounds();
-			return filterBounds(bounds);
-		};
-		return new Array;
-	};
-	function filterBounds(bounds) {
-		var ret = new Array;
-		g_main_map.response_object.forEach( function(meeting) {
-			if (bounds.contains(new google.maps.LatLng ( meeting.latitude, meeting.longitude ))) {
-                ret.push(meeting);
-            }
-		});	
-		return ret;
-	}
-	function fromLatLngToPoint(latLng, map) {
-		var scale = 1 << map.getZoom();
-		var worldPoint = map.getProjection().fromLatLngToPoint(latLng);
-		return new google.maps.Point(worldPoint.x * scale, worldPoint.y * scale);
-	};
 	function mapOverlappingMarkersInCity (in_meeting_array)	///< Used to draw the markers when done.
 	{
 		var city_hash = create_city_hash(in_meeting_array);
@@ -336,7 +173,7 @@ function MeetingMap (
 				tmp[c].matched = false;
 				tmp[c].matches = null;
 				tmp[c].object = city.meetings[c];
-				tmp[c].coords = fromLatLngToPoint( new google.maps.LatLng ( tmp[c].object.latitude, tmp[c].object.longitude ), g_main_map);
+				tmp[c].coords = g_delegate.fromLatLngToPoint( tmp[c].object.latitude, tmp[c].object.longitude );
 			};
 			for ( var c = 0; c < city.meetings.length; c++ )
 			{
@@ -439,7 +276,7 @@ function MeetingMap (
 
 	function createMapMarker (	in_mtg_obj_array	/**< A meeting object array. */)
 	{
-		var main_point = new google.maps.LatLng ( in_mtg_obj_array[0].latitude, in_mtg_obj_array[0].longitude );
+		var main_point = [ in_mtg_obj_array[0].latitude, in_mtg_obj_array[0].longitude ];
 		var marker_html = '<div class="accordion">';
 		var checked = ' checked';
 		var marker_title = '';
@@ -457,9 +294,8 @@ function MeetingMap (
 			
 		}
 		marker_html += '</div>';
-		createMarker ( main_point,
-				       g_icon_shadow,
-				       ((in_mtg_obj_array.length>1) ? g_icon_image_multi : g_icon_image_single),
+		g_delegate.createMarker ( main_point,
+				       (in_mtg_obj_array.length>1),
 				       marker_html, marker_title );
 	};
 	function getDayAndTime( in_meeting_obj ) {
@@ -480,7 +316,7 @@ function MeetingMap (
 		{
 			var myFormatKeys = in_meeting_obj.formats.split(',');
 			for (i=0; i<myFormatKeys.length; i++) {
-				theFormat = g_main_map.format_hash[myFormatKeys[i]];
+				theFormat = g_format_hash[myFormatKeys[i]];
 				if (typeof theFormat == 'undefined') continue;
 				if (theFormat.format_type_enum=='LANG') {
 					var a = c_g_BMLTPlugin_images+'/../lang/'+theFormat.key_string+".png";
@@ -545,7 +381,7 @@ function MeetingMap (
 			ret += '<div class="marker_div_formats">';
 			var myFormatKeys = in_meeting_obj.formats.split(',');
 			for (i=0; i<myFormatKeys.length; i++) {
-				theFormat = g_main_map.format_hash[myFormatKeys[i]];
+				theFormat = g_format_hash[myFormatKeys[i]];
 				if (typeof theFormat == 'undefined') continue;
 				if (theFormat.format_type_enum=='FC2' || theFormat.format_type_enum=='FC3' || 
 				    ((typeof theFormat.format_type_enum!=='undefined')&&theFormat.format_type_enum.charAt(0)=='O')) {
@@ -556,169 +392,32 @@ function MeetingMap (
 		};
 		ret += '</div>';
 
-
+ 
 		return ret;
 	};
-	/************************************************************************************//**
-	 *	\brief Create a generic marker.														*
-	 *																						*
-	 *	\returns a marker object.															*
-	 ****************************************************************************************/
-
-	function createMarker (	in_coords,		///< The long/lat for the marker.
-			in_shadow_icon,	///< The URI for the icon shadow
-			in_main_icon,	///< The URI for the main icon
-			in_html,		///< The info window HTML
-			in_title        ///< The tooltip
-	)
-	{
-		var marker = null;
-
-		var	is_clickable = (in_html ? true : false);
-
-		var marker = new google.maps.Marker ( { 'position':		in_coords,
-				'map':			g_main_map,
-				'shadow':		in_shadow_icon,
-				'icon':			in_main_icon,
-				'shape':		g_icon_shape,
-				'clickable':	is_clickable,
-				'cursor':		'default',
-				'title':        in_title,
-				'draggable':    false
-		} );
-
-		marker.old_image = marker.getIcon();
-
-		google.maps.event.addListener ( marker, "click", function () {
-			// for some reason, closeWhenOthersOpen doesn't work on Chrome....
-			g_allMarkers.forEach(function(marker)
-			{
-				if ( marker != this )
-				{
-					if ( marker.info_win_)
-					{
-						marker.info_win_.close();
-					};
-				};
-			});
-			if ( !marker.info_win_ )
-			{
-				if(marker.old_image){marker.setIcon(g_icon_image_selected)};
-				marker.setZIndex(google.maps.Marker.MAX_ZINDEX+1);
-				marker.info_win_ = new SnazzyInfoWindow({
-		 		        marker: marker,
-				        content: in_html,
-				        showCloseButton: false,
-				        closeWhenOthersOpen: true,
-						callbacks: {
-						    afterClose: function(){
-						            	if(marker.old_image){
-						            		marker.setIcon(marker.old_image);
-						            	};
-						            	marker.setZIndex(null);
-						            	//setTimeout(function(){ this.close(); }, 1000);
-						    }
-						},
-						edgeOffset: {
-						        	  top: 50,
-						        	  right: 5,
-						        	  bottom: 20,
-						        	  left: 5
-						        	}
-				});
-				marker.info_win_.open();
-			}
-		});
-		g_allMarkers[g_allMarkers.length] = marker;
-	};
-	/************************************************************************************//**
-	 *	\brief  
-	 ****************************************************************************************/
-	function promptLocation(in_event) {
-		in_event.target.value = c_g_searchPrompt;
+	function filterVisible() {
+		return filterBounds(g_delegate.getBounds());
 	}
-	function clearLocation(in_event) {
-		in_event.target.value = '';
+	function filterBounds(bounds) {
+		var ret = new Array;
+		g_response_object.forEach( function(meeting) {
+			if (g_delegate.contains(bounds, meeting.latitude, meeting.longitude )) {
+                ret.push(meeting);
+            }
+		});	
+		return ret;
 	}
 	function lookupLocation (in_event)
 	{
 		if (in_event && in_event.keyCode!=13) { return false; };
-		if ( in_event.target.value != '')
-		{
-			callGeocoder(in_event.target.value);
-		}
-		else
-		{
+		if ( in_event.target.value != '') {
+			g_delegate.callGeocoder(in_event.target.value, filterMeetingsAndBounds);
+		} else {
 			alert ( c_g_address_lookup_fail );
 		};
 		return true;
 	};
-
-	/************************************************************************************//**
-	 *	\brief This catches the AJAX response, and fills in the response form.				*
-	 ****************************************************************************************/
-
-	function geoCallback ( in_geocode_response	///< The JSON object.
-	)
-	{
-		if ( in_geocode_response && in_geocode_response[0] && in_geocode_response[0].geometry && in_geocode_response[0].geometry.location )
-		{
-				g_main_map.panTo ( in_geocode_response[0].geometry.location );
-				google.maps.event.addListenerOnce( g_main_map, 'idle', function(ev) {
-					g_main_map.fitBounds(in_geocode_response[0].geometry.viewport);
-					g_main_map.setZoom(getZoomAdjust(true));
-				});
-		}
-		else    // FAIL
-		{
-			alert ( c_g_address_lookup_fail );
-		};
-	};
-	function callGeocoder(in_loc) {
-		var	geocoder = new google.maps.Geocoder;
-
-		if ( geocoder )
-		{
-			var geoCodeParams = { 'address': in_loc };
-			if (c_g_region.trim() !== '') {
-				geoCodeParams.region = c_g_region;
-			}
-			if (c_g_bounds
-			&&  c_g_bounds.north && c_g_bounds.north.trim()!== ''
-			&&  c_g_bounds.east && c_g_bounds.east.trim()!== ''
-			&&  c_g_bounds.south && c_g_bounds.south.trim()!== ''
-			&&  c_g_bounds.west && c_g_bounds.west.trim()!== '') {
-				geoCodeParams.bounds = new google.maps.LatLngBounds(
-					new google.maps.LatLng(c_g_bounds.south, c_g_bounds.west), 
-					new google.maps.LatLng(c_g_bounds.north, c_g_bounds.east));
-			}
-			var	status = geocoder.geocode ( geoCodeParams, geoCallback );
-
-			if ( google.maps.OK != status )
-			{
-				if ( google.maps.INVALID_REQUEST != status )
-				{
-					alert ( c_g_address_lookup_fail );
-				}
-				else
-				{
-					if ( google.maps.ZERO_RESULTS != status )
-					{
-						alert ( c_g_address_lookup_fail );
-					}
-					else
-					{
-						alert ( c_g_server_error );
-					};
-				};
-			};
-		}
-		else	// None of that stuff is defined if we couldn't create the geocoder.
-		{
-			alert ( c_g_server_error );
-		};
-	}
-	function addMenuButton(map,pixel_width) {
+	function createMenuButton(pixel_width) {
 	    var controlDiv = document.createElement('div');
 
 	    var firstChild = document.createElement('button');
@@ -752,9 +451,7 @@ function MeetingMap (
 	    item.addEventListener('click', function(e) {
 	    	if(navigator.geolocation) {
 	    		navigator.geolocation.getCurrentPosition(function(position) {
-	    			var latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-	    			map.setCenter(latlng);
-	    			map.setZoom(getZoomAdjust(false));
+	    			g_delegate.setViewToPosition(position,filterMeetingsAndBounds);
 	    		});
 	    	}
         });
@@ -768,34 +465,24 @@ function MeetingMap (
 	    item.innerHTML = c_g_menu_list;
 	    item.style.display = 'block';
 	    item.addEventListener('click', showListView);
-	    dropdownContent.appendChild(item);
-	    var ios = !!navigator.platform && /iPad|iPhone|iPod/.test(navigator.platform);
-	    if (!ios) {
-	    	item = document.createElement('button');
-	    	item.innerHTML = c_g_menu_fullscreen;
-	    	item.style.display = 'block';
-	    	var toggleItem = item;
-	    	item.addEventListener('click', function(){
-	    		if (document.fullscreenElement) {
-	    			document.exitFullscreen();
-	    			toggleItem.innerHTML = c_g_menu_fullscreen;
-	    		} else {
-	    			g_initial_div.parentNode.requestFullscreen();
-	    			toggleItem.innerHTML = c_g_menu_exitFullscreen;
-	    		}
-	    	});
-	    	dropdownContent.appendChild(item);
-	    }
-	    firstChild.addEventListener('click', function(e){
-	    	if (dropdownContent.style.display == "inline-block") 
-	    		dropdownContent.style.display = "none";
-	    	else
-	    		dropdownContent.style.display = "inline-block";
+		dropdownContent.appendChild(item);
+	    item = document.createElement('button');
+	    item.innerHTML = c_g_menu_fullscreen;
+	    item.style.display = 'block';
+	    var toggleItem = item;
+	    item.addEventListener('click', function() {
+	    	toggleFullscreen();
 	    });
-	    firstChild.appendChild(dropdownContent);
-
-	    controlDiv.index = 1;
-	    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(controlDiv);
+	    dropdownContent.appendChild(item);
+	
+		firstChild.addEventListener('click', function(e){
+	  	 	if (dropdownContent.style.display == "inline-block") 
+	  	 		dropdownContent.style.display = "none";
+	   		else
+	   			dropdownContent.style.display = "inline-block";
+			});
+		firstChild.appendChild(dropdownContent);
+		return controlDiv;
 	}
 	function closeModalWindow(modal) {
 		modal.style.display = "none";
@@ -814,7 +501,7 @@ function MeetingMap (
     		}
     	});
     	document.getElementById('goto-button').addEventListener('click', function() {
-    		callGeocoder(document.getElementById('goto-text').value);
+    		g_delegate.callGeocoder(document.getElementById('goto-text').value, filterMeetingsAndBounds);
     		closeModalWindow(modal);
     	});
     	openModalWindow(modal);
@@ -824,8 +511,8 @@ function MeetingMap (
     	var mainFormats = new Array;
     	var openFormat;
     	
-    	for (var key in g_main_map.format_hash) {
-			var format = g_main_map.format_hash[key];
+    	for (var key in g_format_hash) {
+			var format = g_format_hash[key];
 			if (typeof format.format_type_enum=='undefined') continue;
     		if (format.format_type_enum=='LANG' && key!='de') {
     			langFormats.push(format);
@@ -905,7 +592,7 @@ function MeetingMap (
     			g_filterWeekday = null;
     		closeModalWindow(modal);
     		draw_markers();
-    		g_main_map.setZoom(getZoomAdjust(false));
+    		g_delegate.setZoom(filterMeetingsAndBounds);
     	});
     	document.getElementById('reset_filter_button').addEventListener('click', function() {
     		g_filterHaving = null;
@@ -948,6 +635,9 @@ function MeetingMap (
         	modalFilter.value = selected;
         }
 		return modalFilter;
+	}
+	function filterMeetingsAndBounds(bounds) {
+		return filterMeetings(filterBounds(bounds));
 	}
 	function filterMeetings(in_meetings_array) {
 		var ret = filterMeetings24(in_meetings_array, g_next24hours);
@@ -1025,7 +715,7 @@ function MeetingMap (
 		}
 		return false;
 	}
-    function addFilterMeetingsToggle(map) {
+    		function createFilterMeetingsToggle(map) {
     	var controlDiv = document.createElement('div');
         // Set CSS for the control border.
         var controlUI = document.createElement('div');
@@ -1064,7 +754,7 @@ function MeetingMap (
            draw_markers();
         });
         controlDiv.index = 1;
-        map.controls[google.maps.ControlPosition.TOP_LEFT].push(controlDiv);
+        return controlDiv;
       }
     function meetingTimes(meeting) {
 	    var duration = meeting.duration_time.split(':');
@@ -1149,6 +839,62 @@ function MeetingMap (
 		  // Show the current tab, and add an "active" class to the button that opened the tab
 		  document.getElementById(name).style.display = "block";
 		  evt.currentTarget.className += " active";
+	}
+	function getContainer() {
+		return g_in_div;
+	}
+	var _isPseudoFullscreen = false;
+	function isFullscreen() {
+		var fullscreenElement =
+		document.fullscreenElement ||
+		document.mozFullScreenElement ||
+		document.webkitFullscreenElement ||
+		document.msFullscreenElement;
+
+		return (fullscreenElement === getContainer()) || _isPseudoFullscreen;
+	}
+	function toggleFullscreen(options) {
+		var container = getContainer();
+		if (isFullscreen()) {
+			if (options && options.pseudoFullscreen) {
+				_setFullscreen(false);
+			} else if (document.exitFullscreen) {
+				document.exitFullscreen();
+			} else if (document.mozCancelFullScreen) {
+				document.mozCancelFullScreen();
+			} else if (document.webkitCancelFullScreen) {
+				document.webkitCancelFullScreen();
+			} else if (document.msExitFullscreen) {
+				document.msExitFullscreen();
+			} else {
+				_disablePseudoFullscreen(container);
+			}
+		} else {
+			if (options && options.pseudoFullscreen) {
+				_setFullscreen(true);
+			} else if (container.requestFullscreen) {
+				container.requestFullscreen();
+			} else if (container.mozRequestFullScreen) {
+				container.mozRequestFullScreen();
+			} else if (container.webkitRequestFullscreen) {
+				container.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+			} else if (container.msRequestFullscreen) {
+				container.msRequestFullscreen();
+			} else {
+				_enablePseudoFullscreen(container);
+			}
+		}
+	}
+	var _isPseudoFullscreen = false;
+	function _setFullscreen (fullscreen) {
+		_isPseudoFullscreen = fullscreen;
+		var container = getContainer();
+		if (fullscreen) {
+			L.DomUtil.addClass(container, 'leaflet-pseudo-fullscreen');
+		} else {
+			L.DomUtil.removeClass(container, 'leaflet-pseudo-fullscreen');
+		}
+		g_delegate.invalidateSize();
 	}
 	/****************************************************************************************
 	 *								MAIN FUNCTIONAL INTERFACE								*

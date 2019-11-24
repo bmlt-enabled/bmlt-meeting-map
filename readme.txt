@@ -3,16 +3,18 @@
 Contributors: otrok7
 Tags: na, meeting list, meeting finder, maps, recovery, addiction, webservant, bmlt
 Requires at least: 5.1
-Tested up to: 5.2
+Tested up to: 5.3
 Requires PHP: 7.0
-Stable tag: 1.0.6
+Stable tag: 2.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 
 == Description ==
 
-The BMLT Meeting Map provides a GoogleMaps UI allowing users to find meetings stored in a the Basic Meeting List Toolbox (BMLT) Server.
+The BMLT Meeting Map provides a map so people can find NA meetings stored in a the Basic Meeting List Toolbox (BMLT) Server.
+The map tiles can come from Open Street Maps, from Google Maps or from a local server or proxy,
+depending on the privacy concerns or the users.
 Simply put the shortcode [bmlt_meeting_map] into a WordPress page and a map will be generated where nearby meetings are marked.
 Click on a meeting location, and the details of all the meetings will pop up.  The display is responsive, suitible for mobile and
 computers.  Panning (or zooming) in the map displays meeting there, or you may search for a different location using geocoding.
@@ -39,6 +41,12 @@ This plugin is appropriate for small and medium sized regions.  The meetings tra
 3. Filter the meetings by language, format, or weekday
 
 == Changelog ==
+= 2.0.0 =
+* Choose between OSM and Google Maps framework mapping data. It is also possible to host
+your on map tiles.  This is important for (EU) countries with strict rules regarding
+data privacy.  OSM framework (Leaflet) offers much better performance.
+* UI stability improvements
+
 = 1.0.6 =
 * Added Italian Translation
 
