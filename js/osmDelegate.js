@@ -136,7 +136,10 @@ function MapDelegate() {
     var marker = L.marker(in_coords, {icon: in_main_icon, title: in_title}).bindPopup(in_html).addTo(g_main_map);
 	marker.on('popupopen', function(e) {
         marker.oldIcon = marker.getIcon();
-        marker.setIcon(g_icon_image_selected);
+		marker.setIcon(g_icon_image_selected);
+		g_main_map.on('zoomstart',function(){
+			marker.closePopup();
+		})
     });
     marker.on('popupclose', function(e) {
         marker.setIcon(marker.oldIcon);
