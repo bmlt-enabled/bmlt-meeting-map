@@ -41,6 +41,9 @@ This plugin is appropriate for small and medium sized regions.  The meetings tra
 3. Filter the meetings by language, format, or weekday
 
 == Changelog ==
+= 2.0.1 =
+* UI fixes
+
 = 2.0.0 =
 * Choose between OSM and Google Maps framework mapping data. It is also possible to host
 your on map tiles.  This is important for (EU) countries with strict rules regarding

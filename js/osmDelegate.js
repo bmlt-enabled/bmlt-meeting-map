@@ -36,7 +36,8 @@ function MapDelegate() {
                 'zoom': in_location_coords.zoom,
                 'minZoom': 6,
                 'maxZoom': 18,
-                'doubleClickZoom' : false
+				'doubleClickZoom' : false,
+				'scrollWheelZoom' : false
             };
             g_main_map = new L.Map ( in_div, myOptions );
             g_tileLayer = L.tileLayer(c_g_tileUrl,c_g_tileOptions).addTo(g_main_map);

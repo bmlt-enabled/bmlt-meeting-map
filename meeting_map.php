@@ -489,9 +489,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 $the_new_content .= '<div class="bmlt_map_container_div"  id="bmlt_map_container" >';  // This starts off hidden, and is revealed by JS.
                 $the_new_content .= '<div dir="ltr" class="bmlt_search_map_div" id="bmlt_search_map_div">';
                 $the_new_content .= '<script type="text/javascript">var g_start_week = 2; document.getElementById("bmlt_map_container").style.display=\'block\';c_mm = new MeetingMap( document.getElementById(\'bmlt_search_map_div\'), {\'latitude\':'.$lat.',\'longitude\':'.$lng.',\'zoom\':'.$zoom.'});</script>';
-                $the_new_content .= '</div>
-		        
-		        <div id="filter_modal" class="modal">
+                $the_new_content .= '<div id="filter_modal" class="modal">
 		        
 		        <div class="modal-content">
                 <span class="modal-title">'.$translate['Filter_Header'].'</span><span id="close_filter" class="modal-close">&times;</span>
@@ -538,7 +536,8 @@ if (!class_exists("BMLTMeetingMap")) {
                 </div>
   		        </div>	
                 </div>	        
-		        </div>';
+                </div>
+                </div>';
                 
                 $root_server = $this->options['root_server'];
                 add_action('wp_footer', function () use ($root_server, $query_string, $center_me, $goto, $lang_enum) {

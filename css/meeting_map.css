@@ -238,10 +238,12 @@ div.bmlt_map_container_div  button {
 /* Modal Content/Box */
 .modal-content {
   background-color: #fefefe;
-  margin: 15% auto; /* 15% from the top and centered */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   padding: 20px;
   border: 1px solid #888;
-  width: 80%; /* Could be more or less, depending on screen size */
   line-height: 1.2;
 }
 
@@ -360,7 +362,9 @@ div.bmlt_map_container_div  button {
 	background-color: #DB4865 !important;
 }
 #table_content {
-	font-size: 14px !important; font-family: Roboto, Arial, sans-serif !important;
+  font-size: 14px !important; font-family: Roboto, Arial, sans-serif !important;
+  transform: translate(-50%, 0px);
+  top: 15%;
 }
 #table_content h4 {
   font-size: 14px;
