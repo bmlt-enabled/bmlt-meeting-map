@@ -71,7 +71,7 @@
                         g_allMarkers[c].info_win_.close();
                         g_allMarkers[c] = null;
                     };
-                    marker.setMap( null );
+                    g_allMarkers[c].setMap( null );
                     g_allMarkers[c] = null;
                 };
     
