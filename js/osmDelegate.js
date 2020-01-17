@@ -38,7 +38,10 @@ function MapDelegate() {
                 'maxZoom': 18,
 				'doubleClickZoom' : false,
 				'scrollWheelZoom' : false
-            };
+			};
+			var	pixel_width = in_div.offsetWidth;
+			var	pixel_height = in_div.offsetHeight;
+			if (pixel_height > pixel_width*1.4) in_div.style.height = (pixel_width*1.6)+'px';
             g_main_map = new L.Map ( in_div, myOptions );
             g_tileLayer = L.tileLayer(c_g_tileUrl,c_g_tileOptions).addTo(g_main_map);
 			g_main_map.zoomControl.setPosition('bottomright');
@@ -50,6 +53,9 @@ function MapDelegate() {
         return null;
     }
     function addListener(ev,f,once) {
+		if (ev=='idle') {
+			ev = 'moveend';
+		}
         if (once) {
 			g_main_map.once(ev, f);
 		} else {
@@ -122,7 +128,10 @@ function MapDelegate() {
 	}
     function setZoom(filterMeetings) {
         g_main_map.setZoom(getZoomAdjust(false,filterMeetings));
-    }
+	}
+	function zoomOut(filterMeetings) {
+        g_main_map.setZoom(getZoomAdjust(true,filterMeetings));
+	}
 	function fromLatLngToPoint(lat, lng) {
 		return g_main_map.latLngToLayerPoint(L.latLng(lat,lng));
     };
@@ -284,6 +293,7 @@ function addControl(div,pos) {
 	this.contains = contains;
 	this.getBounds = getBounds;
 	this.invalidateSize = invalidateSize;
+	this.zoomOut = zoomOut;
 }
 MapDelegate.prototype.createMap = null;
 MapDelegate.prototype.addListener = null;
@@ -297,3 +307,4 @@ MapDelegate.prototype.createMarker = null;
 MapDelegate.prototype.contains = null;
 MapDelegate.prototype.getBounds = null;
 MapDelegate.prototype.invalidateSize = null;
+MapDelegate.prototype.zoomOut = null;

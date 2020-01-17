@@ -22,5 +22,8 @@ $translate = array (
     'MENU_FULLSCREEN'                 =>  "Ginocchiera modalità schermo intero",
     'MENU_TOOLTIP'                    =>  "Ricerca estesa",
     'Find_Meetings'                   =>  "Trova riuonies",
-    'Go'                              =>  "Partire!"
+    'Go'                              =>  "Partire!",
+    'By_Day'                          =>  "By Day",
+    'By_City'                         =>  "By City",
+    'Meetings_on_Map'                 =>  "Meetings on Map",
 );

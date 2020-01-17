@@ -140,12 +140,9 @@ function MeetingMap (in_div, in_coords)
 			},true);
 		}
 	};
-
-
 	/****************************************************************************************
 	 *									CREATING MARKERS									*
 	 ****************************************************************************************/
-
 	function draw_markers() {
 		g_delegate.clearAllMarkers();
 
@@ -217,8 +214,6 @@ function MeetingMap (in_div, in_coords)
 
 		return ret;
 	};
-
-		
 	/************************************************************************************//**
 	 *	 \brief	Callback used to sort the meeting response by weekday.                      *
 	 *    \returns 1 if a>b, -1 if a<b or 0 if they are equal.                               *
@@ -269,13 +264,10 @@ function MeetingMap (in_div, in_coords)
 		}
 		return sortMeetingSearchResponseCallback(mtg_a, mtg_b);
 	}
-
 	/************************************************************************************//**
 	 *	 \brief	This creates a single meeting's marker on the map.							*
 	 ****************************************************************************************/
-
-	function createMapMarker (	in_mtg_obj_array	/**< A meeting object array. */)
-	{
+	function createMapMarker (	in_mtg_obj_array	/**< A meeting object array. */) {
 		var main_point = [ in_mtg_obj_array[0].latitude, in_mtg_obj_array[0].longitude ];
 		var marker_html = '<div class="accordion">';
 		var checked = ' checked';
@@ -291,7 +283,6 @@ function MeetingMap (in_div, in_coords)
 			marker_html += '<label for="panel-'+c+'">'+dayAndTime+'</label>';
 			marker_html += marker_make_meeting(in_mtg_obj_array[c]);
 			marker_html += '</div>';
-			
 		}
 		marker_html += '</div>';
 		g_delegate.createMarker ( main_point,
@@ -407,11 +398,15 @@ function MeetingMap (in_div, in_coords)
 		});	
 		return ret;
 	}
-	function lookupLocation (in_event)
-	{
-		if (in_event && in_event.keyCode!=13) { return false; };
-		if ( in_event.target.value != '') {
-			g_delegate.callGeocoder(in_event.target.value, filterMeetingsAndBounds);
+	function lookupLocation(text,fullscreen) {
+		if ( document.getElementById('goto-text').value != '') {
+			if (fullscreen) {
+				g_delegate.addListener('idle', function() {
+					g_delegate.callGeocoder(document.getElementById('goto-text').value, filterMeetingsAndBounds);
+				}, true);
+			} else {
+				g_delegate.callGeocoder(document.getElementById('goto-text').value, filterMeetingsAndBounds);
+			}
 		} else {
 			alert ( c_g_address_lookup_fail );
 		};
@@ -484,29 +479,51 @@ function MeetingMap (in_div, in_coords)
 		firstChild.appendChild(dropdownContent);
 		return controlDiv;
 	}
+	var g_suspendedFullscreen = false;
 	function closeModalWindow(modal) {
 		modal.style.display = "none";
+		if (g_suspendedFullscreen) {
+			g_suspendedFullscreen = false;
+			if (!isFullscreen()) {
+				toggleFullscreen();
+			}
+		}
 	}	
 	function openModalWindow(modal) {
+		if (isFullscreen()) {
+			g_suspendedFullscreen = true;
+			toggleFullscreen();
+		}
 		modal.style.display = "block";
 	}
+	var g_searchDialog_created = false;
 	function showSearchDialog(e) {
-    	var modal = document.getElementById('search_modal');
+		var modal = document.getElementById('search_modal');
+		if (!g_searchDialog_created) {
+		g_searchDialog_created = true;
     	document.getElementById('close_search').addEventListener('click', function() {
     		closeModalWindow(modal);
     	});
     	document.getElementById('goto-text').addEventListener('keydown', function(event) {
-    		if (lookupLocation(event)) {
-    			closeModalWindow(modal);
+			if (event && event.keyCode==13) {
+				var t = g_suspendedFullscreen;
+				closeModalWindow(modal);
+				lookupLocation(document.getElementById('goto-text').value,t);
     		}
     	});
     	document.getElementById('goto-button').addEventListener('click', function() {
-    		g_delegate.callGeocoder(document.getElementById('goto-text').value, filterMeetingsAndBounds);
-    		closeModalWindow(modal);
-    	});
+			var t = g_suspendedFullscreen;
+			closeModalWindow(modal);
+			lookupLocation(document.getElementById('goto-text').value,t);
+		});
+	}
     	openModalWindow(modal);
-    }
+	}
+	var g_filterDialog_created = false;
 	function showFilterDialog(e) {
+		var modal = document.getElementById('filter_modal');
+		if (!g_filterDialog_created) {
+			g_filterDialog_created = true;
     	var langFormats = new Array;
     	var mainFormats = new Array;
     	var openFormat;
@@ -514,7 +531,7 @@ function MeetingMap (in_div, in_coords)
     	for (var key in g_format_hash) {
 			var format = g_format_hash[key];
 			if (typeof format.format_type_enum=='undefined') continue;
-    		if (format.format_type_enum=='LANG' && key!='de') {
+    		if (format.format_type_enum=='LANG') {
     			langFormats.push(format);
     		} else if (format.format_type_enum=='FC2' || format.format_type_enum=='FC3') {
     			mainFormats.push(format);
@@ -552,8 +569,6 @@ function MeetingMap (in_div, in_coords)
 			document.getElementById('open_filter_text').style.display = "none";
 			open_element.checked = false;
     	} 
-    	
-    	var modal = document.getElementById('filter_modal');
     	document.getElementById('filter_button').addEventListener('click', function() {
     		g_filterHaving = new Array;
     		g_filterWeekday = new Array;
@@ -592,7 +607,7 @@ function MeetingMap (in_div, in_coords)
     			g_filterWeekday = null;
     		closeModalWindow(modal);
     		draw_markers();
-    		g_delegate.setZoom(filterMeetingsAndBounds);
+    		g_delegate.zoomOut(filterMeetingsAndBounds);
     	});
     	document.getElementById('reset_filter_button').addEventListener('click', function() {
     		g_filterHaving = null;
@@ -609,7 +624,8 @@ function MeetingMap (in_div, in_coords)
     	});
     	document.getElementById('close_filter').addEventListener('click', function() {
     		closeModalWindow(modal);
-    	});
+		});
+		}
     	openModalWindow(modal);
     }
 	function fillSelect(filterId, formats, filtered) {
@@ -645,7 +661,15 @@ function MeetingMap (in_div, in_coords)
 		ret = filterMeetingDay(ret,g_filterWeekday);
 		return ret;
 	}
-	
+	function noLangs(fmts) {
+		for (i=0; i<fmts.length; i++) {
+			theFormat = g_format_hash[fmts[i]];
+			if (typeof theFormat == 'undefined') continue;
+			if (typeof theFormat.format_type_enum == 'undefined') continue;
+			if (theFormat.format_type_enum=='LANG') return false;
+		}
+		return true;
+	}
 	function filterMeetingsFmts(in_meetings_array, fmt) {
 		if (fmt != null && fmt.length>0) {
 			var ret = new Array;
@@ -653,6 +677,11 @@ function MeetingMap (in_div, in_coords)
 			{
 				var ok = true;
 				var keys = in_meetings_array[c].formats.split(',');
+				if (fmt.includes('de')) {
+					if (noLangs(keys)) {
+						keys.push('de');
+					}
+				}
 				for ( var d=0; d<fmt.length; d++) {
 					if (keys.includes(fmt[d]))
 						continue;
@@ -787,7 +816,8 @@ function MeetingMap (in_div, in_coords)
     		closeModalWindow(modal);
     	});
     	var listElement = document.getElementById("modal-view-by-weekday");
-    	meetings.sort(sortMeetingSearchResponseCallback);
+		meetings.sort(sortMeetingSearchResponseCallback);
+		document.getElementById('modal-title').innerHTML = meetings.length+' '+c_g_Meetings_on_Map;
     	var html = '<table class="bmlt-table table table-striped table-hover table-bordered">';
     	var section = '';
     	meetings.forEach(function(meeting){

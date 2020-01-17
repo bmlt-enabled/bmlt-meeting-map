@@ -22,5 +22,8 @@ $translate = array (
     'MENU_FULLSCREEN'                 =>  "Toggle Fullscreen Mode",
     'MENU_TOOLTIP'                    =>  "Extended Search",
     'Find_Meetings'                   =>  "Find Meetings",
-    'Go'                              =>  "Go!"
+    'Go'                              =>  "Go!",
+    'By_Day'                          =>  "By Day",
+    'By_City'                         =>  "By City",
+    'Meetings_on_Map'                 =>  "Meetings",
 );

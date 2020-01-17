@@ -3,7 +3,7 @@
 Plugin Name: BMLT Meeting Map
 Description: Simple responsive Meeting Map.
 Author: BmltEnabled
-Version: 2.0.1
+Version: 2.0.2
 */
 /* Disallow direct access to the plugin file */
 if (basename($_SERVER['PHP_SELF']) == basename(__FILE__)) {
@@ -489,7 +489,9 @@ if (!class_exists("BMLTMeetingMap")) {
                 $the_new_content .= '<div class="bmlt_map_container_div"  id="bmlt_map_container" >';  // This starts off hidden, and is revealed by JS.
                 $the_new_content .= '<div dir="ltr" class="bmlt_search_map_div" id="bmlt_search_map_div">';
                 $the_new_content .= '<script type="text/javascript">var g_start_week = 2; document.getElementById("bmlt_map_container").style.display=\'block\';c_mm = new MeetingMap( document.getElementById(\'bmlt_search_map_div\'), {\'latitude\':'.$lat.',\'longitude\':'.$lng.',\'zoom\':'.$zoom.'});</script>';
-                $the_new_content .= '<div id="filter_modal" class="modal">
+                $the_new_content .= '</div>
+		        
+		        <div id="filter_modal" class="modal">
 		        
 		        <div class="modal-content">
                 <span class="modal-title">'.$translate['Filter_Header'].'</span><span id="close_filter" class="modal-close">&times;</span>
@@ -516,10 +518,10 @@ if (!class_exists("BMLTMeetingMap")) {
 		        <div id="table_modal" class="modal">
 		        
 		        <div id="table_content" class="modal-content">
-		        <span class="modal-title">Meetings on Map</span><span id="close_table" class="modal-close">&times;</span>
+		        <span class="modal-title" id="modal-title"></span><span id="close_table" class="modal-close">&times;</span>
                 <div id="modal-tab">
-                    <button id="modal-day-button" class="modal-tablinks" onclick="c_mm.openTableViewExt(event, \'modal-view-by-weekday\')">By Day</button>
-                    <button id="modal-city-button" class="modal-tablinks" onclick="c_mm.openTableViewExt(event, \'modal-view-by-city\')">By City</button>
+                    <button id="modal-day-button" class="modal-tablinks" onclick="c_mm.openTableViewExt(event, \'modal-view-by-weekday\')">'.$translate['By_Day'].'</button>
+                    <button id="modal-city-button" class="modal-tablinks" onclick="c_mm.openTableViewExt(event, \'modal-view-by-city\')">'.$translate['By_City'].'</button>
                 </div>
                 <div id="modal-view-by-weekday" class="modal-tabcontent"></div>
                 <div id="modal-view-by-city" class="modal-tabcontent"></div>
@@ -536,8 +538,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 </div>
   		        </div>	
                 </div>	        
-                </div>
-                </div>';
+		        </div>';
                 
                 $root_server = $this->options['root_server'];
                 add_action('wp_footer', function () use ($root_server, $query_string, $center_me, $goto, $lang_enum) {
@@ -629,6 +630,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 $ret .= " '".$key."': '".$value."',";
             }
             $ret .= '};';
+            $ret .= 'var c_g_Meetings_on_Map = "'.htmlspecialchars($translate['Meetings_on_Map']).'";';     
             $ret .= '</script>';
             $ret .= '<style type="text/css">.onoffswitch-inner:before {
     content: "'.$translate["Next_24_hours"].'";

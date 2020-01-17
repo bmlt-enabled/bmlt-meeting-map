@@ -119,6 +119,9 @@
         function setZoom(filterMeetings) {
             g_main_map.setZoom(getZoomAdjust(false,filterMeetings));
         }
+        function zoomOut(filterMeetings) {
+            g_main_map.setZoom(getZoomAdjust(true,filterMeetings));
+        }
         function contains(bounds, lat, lng) {
            return bounds.contains(new google.maps.LatLng ( lat, lng));
         }
@@ -354,6 +357,7 @@
         this.contains = contains;
         this.getBounds = getBounds;
         this.invalidateSize = invalidateSize;
+        this.zoomOut = zoomOut;
     }
     MapDelegate.prototype.createMap = null;
     MapDelegate.prototype.addListener = null;
@@ -367,3 +371,4 @@
     MapDelegate.prototype.contains = null;
     MapDelegate.prototype.getBounds = null;
     MapDelegate.prototype.invalidateSize = null;
+    MapDelegate.prototype.zoomOut = null;
