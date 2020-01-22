@@ -630,7 +630,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 $ret .= " '".$key."': '".$value."',";
             }
             $ret .= '};';
-            $ret .= 'var c_g_Meetings_on_Map = "'.htmlspecialchars($translate['Meetings_on_Map']).'";';     
+            $ret .= 'var c_g_Meetings_on_Map = "'.htmlspecialchars($translate['Meetings_on_Map']).'";';
             $ret .= '</script>';
             $ret .= '<style type="text/css">.onoffswitch-inner:before {
     content: "'.$translate["Next_24_hours"].'";
