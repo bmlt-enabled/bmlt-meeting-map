@@ -3,7 +3,7 @@
 Contributors: otrok7
 Tags: na, meeting list, meeting finder, maps, recovery, addiction, webservant, bmlt
 Requires at least: 5.1
-Tested up to: 5.3
+Tested up to: 5.4.0
 Requires PHP: 7.0
 Stable tag: 2.0.2
 License: GPLv2 or later
