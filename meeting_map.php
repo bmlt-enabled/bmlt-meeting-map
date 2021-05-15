@@ -55,7 +55,7 @@ if (!class_exists("BMLTMeetingMap")) {
                     //'subdomains'    => '["a","b","c"]'
                     );
                     break;
-                case custom:
+                case 'custom':
                     // http://tileserver.maptiler.com/campus/{z}/{x}/{y}.png
                     $this->options['tile_params'] = array(
                     'attribution'   => $this->options['tile_attribution'],
@@ -78,6 +78,7 @@ if (!class_exists("BMLTMeetingMap")) {
         {
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
             $post_to_check = get_post(get_the_ID());
+            if ($post_to_check==null) return false;
             // check the post content for the short code
             if (stripos($post_to_check->post_content, '[bmlt_meeting_map') !== false) {
                 return true;
@@ -193,7 +194,10 @@ if (!class_exists("BMLTMeetingMap")) {
                 if (!wp_verify_nonce($_POST['_wpnonce'], 'bmltmapupdate-options')) {
                     die('Whoops! There was a problem with the data you posted. Please go back and try again.');
                 }
-                $this->options['root_server'] = validate_url($_POST['root_server']);
+                if (filter_var($_POST['root_server'], FILTER_VALIDATE_URL))
+                    $this->options['root_server'] = $_POST['root_server'];
+                else 
+                    $this->options['root_server'] = '';
                 $this->options['api_key'] = sanitize_text_field($_POST['api_key']);
                 $this->options['region_bias'] = sanitize_text_field($_POST['region_bias']);
                 $this->options['bounds_north'] = sanitize_text_field($_POST['bounds_north']);
@@ -413,7 +417,7 @@ if (!class_exists("BMLTMeetingMap")) {
             }
             $parts = parse_url($this->options['root_server']);
             if (isset($parts['scheme']) && isset($parts['host']) && isset($parts['path'])) {
-                $this->options['root_server'] = $parts['scheme'].'://'.$parts['host'].$parts['path'];
+                //$this->options['root_server'] = $parts['scheme'].'://'.$parts['host'].$parts['path'];
             }
             if (!isset($this->options['tile_provider'])) {
                 $this->options['tile_provider'] = 'google';
@@ -434,7 +438,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 $this->options['root_server'] = $path_parts['dirname'];
             }
             $parts = parse_url($this->options['root_server']);
-            $this->options['root_server'] = $parts['scheme'].'://'.$parts['host'].$parts['path'];
+            //$this->options['root_server'] = $parts['scheme'].'://'.$parts['host'].$parts['path'];
             $this->options['root_server'] = untrailingslashit($this->options['root_server']);
             update_option($this->optionsName, $this->options);
             return;
@@ -615,6 +619,9 @@ if (!class_exists("BMLTMeetingMap")) {
             $ret .= "var c_g_BMLTPlugin_lang_dir = '".htmlspecialchars($this->get_plugin_path()."/lang")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
             $ret .= "var c_g_BMLTPlugin_throbber_img_src = '".htmlspecialchars($this->get_plugin_path()."/map_images/Throbber.gif")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
             $ret .= 'var c_g_map_link_text = "'.htmlspecialchars($translate['OPEN_GOOGLE']).'";';
+            $ret .= 'var c_g_hygene_header = "'.htmlspecialchars($translate['Hygene_Header']).'";';
+            $ret .= 'var c_g_hygene_button = "'.htmlspecialchars($translate['Hygene_Button']).'";';
+            $ret .= 'var c_g_hygene_back = "'.htmlspecialchars($translate['Hygene_Back']).'";';
             $ret .= 'var c_g_region = "'.$options['region_bias'].'";';
             $ret .= 'var c_g_bounds = {';
                 $ret .= ' "north": "'.$this->options['bounds_north'].'",';
@@ -630,7 +637,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 $ret .= " '".$key."': '".$value."',";
             }
             $ret .= '};';
-            $ret .= 'var c_g_Meetings_on_Map = "'.htmlspecialchars($translate['Meetings_on_Map']).'";';
+            $ret .= 'var c_g_Meetings_on_Map = "'.htmlspecialchars($translate['Meetings_on_Map']).'";';     
             $ret .= '</script>';
             $ret .= '<style type="text/css">.onoffswitch-inner:before {
     content: "'.$translate["Next_24_hours"].'";
@@ -654,6 +661,7 @@ if (!class_exists("BMLTMeetingMap")) {
         public function getAllMeetings($root_server, $query_string)
         {
             if (isset($query_string) && $query_string != '') {
+                $query_string = str_replace("()","[]",$query_string);
                 $query_string = "&$query_string";
             } else {
                 $query_string = '';

@@ -26,4 +26,7 @@ $translate = array (
     'By_Day'                          =>  "Wochentag",
     'By_City'                         =>  "Städte",
     'Meetings_on_Map'                 =>  "Meetings",
+    'Hygene_Header'                   => 'Meeting hat besondere Regeln wegen Corona Pandemie.  Die Verantwortung der Umsetzung dieser behördlichen Bestimmungen liegt bei dem Meeting.  Bei diese Meeting gilt:',
+    'Hygene_Button'                   => 'COVID-19 Regeln',
+    'Hygene_Back'                     => 'Adresse Zeigen',
 );

@@ -41,7 +41,10 @@ function MapDelegate() {
 			};
 			var	pixel_width = in_div.offsetWidth;
 			var	pixel_height = in_div.offsetHeight;
-			if (pixel_height > pixel_width*1.4) in_div.style.height = (pixel_width*1.6)+'px';
+			if (pixel_height > pixel_width*1.4) {
+				in_div.style.height = (pixel_width*1.6)+'px';
+				in_div.parentNode.style.height = in_div.style.height;
+			}
             g_main_map = new L.Map ( in_div, myOptions );
             g_tileLayer = L.tileLayer(c_g_tileUrl,c_g_tileOptions).addTo(g_main_map);
 			g_main_map.zoomControl.setPosition('bottomright');
@@ -95,7 +98,7 @@ function MapDelegate() {
 		var zoomedOut = false;
 		while(filterMeetings(bounds).length==0 && ret>6) {
 			zoomedOut = true;
-			// no exact, because earth is curved
+			// not exact, because earth is curved
 			ret -= 1;
 			var ne = L.latLng(
 				(2*bounds.getNorthEast().lat)-center.lat,
@@ -245,7 +248,7 @@ function addControl(div,pos) {
     };
  	function geoCallback ( in_geocode_response,	filterMeetings) {
         if ( in_geocode_response && in_geocode_response[0] && in_geocode_response[0].bbox ) {
-            g_main_map.flyToBounds ( in_geocode_response[0].bbox );
+	        g_main_map.flyToBounds ( in_geocode_response[0].bbox );
             g_main_map.on('moveend', function(ev) {
 				g_main_map.off('moveend');
 				g_main_map.setZoom(getZoomAdjust(true, filterMeetings));
