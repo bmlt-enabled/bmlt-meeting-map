@@ -78,7 +78,9 @@ if (!class_exists("BMLTMeetingMap")) {
         {
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
             $post_to_check = get_post(get_the_ID());
-            if ($post_to_check==null) return false;
+            if ($post_to_check==null) {
+                return false;
+            }
             // check the post content for the short code
             if (stripos($post_to_check->post_content, '[bmlt_meeting_map') !== false) {
                 return true;
@@ -194,10 +196,11 @@ if (!class_exists("BMLTMeetingMap")) {
                 if (!wp_verify_nonce($_POST['_wpnonce'], 'bmltmapupdate-options')) {
                     die('Whoops! There was a problem with the data you posted. Please go back and try again.');
                 }
-                if (filter_var($_POST['root_server'], FILTER_VALIDATE_URL))
+                if (filter_var($_POST['root_server'], FILTER_VALIDATE_URL)) {
                     $this->options['root_server'] = $_POST['root_server'];
-                else 
+                } else {
                     $this->options['root_server'] = '';
+                }
                 $this->options['api_key'] = sanitize_text_field($_POST['api_key']);
                 $this->options['region_bias'] = sanitize_text_field($_POST['region_bias']);
                 $this->options['bounds_north'] = sanitize_text_field($_POST['bounds_north']);
@@ -637,7 +640,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 $ret .= " '".$key."': '".$value."',";
             }
             $ret .= '};';
-            $ret .= 'var c_g_Meetings_on_Map = "'.htmlspecialchars($translate['Meetings_on_Map']).'";';     
+            $ret .= 'var c_g_Meetings_on_Map = "'.htmlspecialchars($translate['Meetings_on_Map']).'";';
             $ret .= '</script>';
             $ret .= '<style type="text/css">.onoffswitch-inner:before {
     content: "'.$translate["Next_24_hours"].'";
@@ -661,7 +664,7 @@ if (!class_exists("BMLTMeetingMap")) {
         public function getAllMeetings($root_server, $query_string)
         {
             if (isset($query_string) && $query_string != '') {
-                $query_string = str_replace("()","[]",$query_string);
+                $query_string = str_replace("()", "[]", $query_string);
                 $query_string = "&$query_string";
             } else {
                 $query_string = '';
