@@ -26,7 +26,7 @@ $translate = array (
     'By_Day'                          =>  "By Day",
     'By_City'                         =>  "By City",
     'Meetings_on_Map'                 =>  "Meetings",
-    'Hygene_Header'                   => 'Due to the pandemic, this Meeting has restrictions for which the meeting is responsible for implementing.  At this meeting, the following apply:',
+    'Hygene_Header'                   => 'Due to the pandemic, this Meeting has restrictions that the meeting is responsible for implementing.  At this meeting, the following apply:',
     'Hygene_Button'                   => 'COVID-19 Rules',
     'Hygene_Back'                     => 'Show Address',
 );
