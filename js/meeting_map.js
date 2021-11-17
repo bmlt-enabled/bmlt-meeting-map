@@ -724,9 +724,7 @@ function MeetingMap(in_div, in_coords) {
 		ret = new Array;
 		for (var c = 0; c < in_meeting_array.length; c++) {
 			if (isClosed(in_meeting_array[c])) continue;
-			if (!(('link' in in_meeting_array[c])
-				&& in_meeting_array[c].link
-				&& in_meeting_array[c].link.length > 0)) {
+			if (!isVirtual(in_meeting_array[c])) {
 				ret.push(in_meeting_array[c]);
 			} else if (isHybrid(in_meeting_array[c])) {
 				ret.push(in_meeting_array[c]);
@@ -747,6 +745,13 @@ function MeetingMap(in_div, in_coords) {
 	function isClosed(mtg) {
 		var keys = mtg.formats.split(',');
 		if (keys.includes('VG')) {
+			return true;
+		}
+		return false;
+	}
+	function isVirtual(mtg) {
+		var keys = mtg.formats.split(',');
+		if (keys.includes('VM')) {
 			return true;
 		}
 		return false;
