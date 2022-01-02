@@ -1,10 +1,10 @@
 === BMLT Meeting Map ===  
 
-Contributors: otrok7
+Contributors: otrok7, bmltenabled
 Tags: na, meeting list, meeting finder, maps, recovery, addiction, webservant, bmlt
 Requires PHP: 7.1
 Requires at least: 5.1
-Tested up to: 5.8.1
+Tested up to: 5.8.2
 Stable tag: 2.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
