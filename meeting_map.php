@@ -139,7 +139,7 @@ if (!class_exists("BMLTMeetingMap")) {
                         $gKey = $this->options['api_key'];
                     }
                     $googleJs = $gKey;
-                    if (isset($this->options['region_bias']) && $this->options['region_bias']) {
+                    if (!empty($this->options['region_bias'])) {
                         $googleJs .= '&region='.strtoupper($this->options['region_bias']);
                     }
 
@@ -224,8 +224,8 @@ if (!class_exists("BMLTMeetingMap")) {
                 $this->options['lang'] = sanitize_text_field($_POST['lang']);
                 $this->options['tile_provider'] = sanitize_text_field($_POST['tile_provider']);
                 $this->options['nominatim_url'] = sanitize_text_field($_POST['nominatim_url']);
-                $this->options['tile_url'] = sanitize_text_field($_POST['tile_url']);
-                $this->options['tile_attribution'] = wp_kses_post(stripslashes($_POST['tile_attribution']));
+                $this->options['tile_url'] = isset($_POST['tile_url']) ? sanitize_text_field($_POST['tile_url']) : '';
+                $this->options['tile_attribution'] = isset($_POST['tile_attribution']) ? wp_kses_post(stripslashes($_POST['tile_attribution'])) : '';
                 if (empty($this->options['nominatim_url'])) {
                     $this->options['nominatim_url'] = 'https://nominatim.openstreetmap.org/';
                 }
@@ -242,9 +242,6 @@ if (!class_exists("BMLTMeetingMap")) {
                     <?php $connect = "<p><div style='color: #f00;font-size: 16px;vertical-align: text-top;' class='dashicons dashicons-no'></div><span style='color: #f00;'>Connection to Root Server Failed.  Check spelling or try again.  If you are certain spelling is correct, Root Server could be down.</span></p>"; ?>
                     <?php if ($this_connected != false) {
                         $info = simplexml_load_string($this_connected);
-                        if (!isset($this->options['lang']) || $this->options['lang']=='') {
-                            $this->options['lang'] = 'en';
-                        }
                         $versionString = $info->serverVersion->readableString;
                         $versionParts = explode('.', $versionString);
                         if (intval($versionParts[0])*100+intval($versionParts[1]) < intval(213)) {
@@ -438,6 +435,33 @@ if (!class_exists("BMLTMeetingMap")) {
             if (!isset($this->options['nominatim_url'])) {
                 $this->options['nominatim_url'] = 'https://nominatim.openstreetmap.org/';
             }
+            if (!isset($this->options['lang'])) {
+                $this->options['lang'] = 'en';
+            }
+            if (!isset($this->options['tile_url'])) {
+                $this->options['tile_url'] = '';
+            }
+            if (!isset($this->options['tile_attribution'])) {
+                $this->options['tile_attribution'] = '';
+            }
+            if (!isset($this->options['region_bias'])) {
+                $this->options['region_bias'] = '';
+            }
+            if (!isset($this->options['time_format'])) {
+                $this->options['time_format'] = '12';
+            }
+            if (!isset($this->options['bounds_north'])) {
+                $this->options['bounds_north'] = '';
+            }
+            if (!isset($this->options['bounds_east'])) {
+                $this->options['bounds_east'] = '';
+            }
+            if (!isset($this->options['bounds_south'])) {
+                $this->options['bounds_south'] = '';
+            }
+            if (!isset($this->options['bounds_west'])) {
+                $this->options['bounds_west'] = '';
+            }
         }
         /**
          * Saves the admin options to the database.
@@ -447,7 +471,7 @@ if (!class_exists("BMLTMeetingMap")) {
         {
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
             $path_parts = pathinfo($this->options['root_server']);
-            if ($path_parts['extension']) {
+            if (isset($path_parts['extension']) && $path_parts['extension']) {
                 $this->options['root_server'] = $path_parts['dirname'];
             }
             $parts = parse_url($this->options['root_server']);
