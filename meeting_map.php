@@ -3,7 +3,7 @@
 Plugin Name: BMLT Meeting Map
 Description: Simple responsive Meeting Map.
 Author: BmltEnabled
-Version: 2.2
+Version: 2.3
 */
 /* Disallow direct access to the plugin file */
 if (basename($_SERVER['PHP_SELF']) == basename(__FILE__)) {
@@ -694,7 +694,7 @@ if (!class_exists("BMLTMeetingMap")) {
             $args = array(
                 'timeout' => '120',
                 'headers' => array(
-                    'User-Agent' => 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0) +BmltMeetingMap'
+                    'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:105.0) Gecko/20100101 Firefox/105.0 +BmltMeetingMap'
                 )
             );
             return wp_remote_get($url, $args);
