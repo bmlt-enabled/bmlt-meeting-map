@@ -631,7 +631,6 @@ if (!class_exists("BMLTMeetingMap")) {
             $ret .= 'var c_g_address_lookup_fail = "'.$this->hsc($translate['ADDRESS_LOOKUP_FAIL']).'";';
             $ret .= 'var c_g_menu_nearMe = "'.$this->hsc($translate['MENU_NEAR_ME']).'";';
             $ret .= 'var c_g_menu_fullscreen = "'.$this->hsc($translate['MENU_FULLSCREEN']).'";';
-            $ret .= 'var c_g_menu_exitFullscreen = "'.$this->hsc($translate['MENU_EXIT_FULLSCREEN']).'";';
             $ret .= 'var c_g_menu_tooltip = "'.$this->hsc($translate['MENU_TOOLTIP']).'";';
             $ret .= 'var c_BMLTPlugin_files_uri = \''.$this->hsc($this->get_plugin_path()).'?\';' . (defined('_DEBUG_MODE_') ? "\n" : '');
             $ret .= "var c_g_BMLTPlugin_images = '".$this->hsc($this->get_plugin_path()."/map_images")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
