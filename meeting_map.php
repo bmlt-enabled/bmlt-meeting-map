@@ -134,6 +134,16 @@ if (!class_exists("BMLTMeetingMap")) {
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
             if ($this->has_shortcode()) {
                 if ($this->options['tile_provider'] == 'google') {
+                    $gKey = '';
+                    if (isset($this->options['api_key']) && ('' != $this->options['api_key']) && ('INVALID' != $this->options['api_key'])) {
+                        $gKey = $this->options['api_key'];
+                    }
+                    $googleJs = $gKey;
+                    if (isset($this->options['region_bias']) && $this->options['region_bias']) {
+                        $googleJs .= '&region='.strtoupper($this->options['region_bias']);
+                    }
+
+                    wp_enqueue_script('googlemaps', 'https://maps.googleapis.com/maps/api/js?libraries=geometry&key='.$googleJs, false, '3');
                     wp_enqueue_style("snazzy-info-window", plugin_dir_url(__FILE__) . "css/snazzy-info-window.min.css", false, filemtime(plugin_dir_path(__FILE__) . "css/snazzy-info-window.min.css"), false);
                     wp_enqueue_style("meeting_map", plugin_dir_url(__FILE__) . "css/meeting_map.css", false, filemtime(plugin_dir_path(__FILE__) . "css/meeting_map.css"), false);
                     wp_enqueue_script("snazzy-info-window", plugin_dir_url(__FILE__) . "js/snazzy-info-window.min.js", false, filemtime(plugin_dir_path(__FILE__) . "js/snazzy-info-window.min.js"), true);
@@ -587,26 +597,13 @@ if (!class_exists("BMLTMeetingMap")) {
 		    // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
             $this->enhanceTileProvider();
             $options = $this->options;
-            $gKey = '';
-            
-            if (isset($options['api_key']) && ('' != $options['api_key']) && ('INVALID' != $options['api_key'])) {
-                $gKey = $options['api_key'];
-            }
             $ret = '';
-            if ($this->options['tile_provider']=='google') {
-            // Include the Google Maps API files.
-                $ret = '<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=geometry&key='.$gKey;
-                if (isset($options['region_bias']) && $options['region_bias']) {
-                    $ret .= '&region='.strtoupper($options['region_bias']);
-                }
-                $ret .= '"></script>';
-            }
             // Declare the various globals and display strings. This is how we pass strings to the JavaScript, as opposed to the clunky way we do it in the root server.
             $ret .= '<script type="text/javascript">' . (defined('_DEBUG_MODE_') ? "\n" : '');
             $ret .= 'var c_g_no_meetings_found = "'.htmlspecialchars($translate['NO_MEETINGS']).'";';
             $ret .= 'var c_g_server_error = "'.htmlspecialchars($translate['SERVER_ERROR']).'";';
-            $ret .= 'var c_g_weekdays = '.htmlspecialchars($translate['WEEKDAYS']).';';
-            $ret .= 'var c_g_weekdays_short = '.htmlspecialchars($translate['WKDYS']).';';
+            $ret .= 'var c_g_weekdays = '.$translate['WEEKDAYS'].';';
+            $ret .= 'var c_g_weekdays_short = '.$translate['WKDYS'].';';
             $ret .= 'var c_g_menu_search = "'.htmlspecialchars($translate['MENU_SEARCH']).'";';
             $ret .= 'var c_g_searchPrompt = "'.htmlspecialchars($translate['SEARCH_PROMPT']).'";';
             $ret .= 'var c_g_menu_filter = "'.htmlspecialchars($translate['MENU_FILTER']).'";';
