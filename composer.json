@@ -1,4 +1,13 @@
 {
+  "name": "bmlt/bmlt-meeting-map",
+  "description": "This is a WordPress plugin for BMLT.",
+  "type": "project",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "otrok7"
+    }
+  ],
   "require-dev": {
     "squizlabs/php_codesniffer": "3.*"
   }
