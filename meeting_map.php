@@ -500,12 +500,27 @@ if (!class_exists("BMLTMeetingMap")) {
                 $goto = $gotoTmp;
                 $center_me = 0;
             }
+            $details = isset($_GET['meeting-id']) ? sanitize_text_field($_GET['meeting-id']) : '';
+            if ($details!='') {
+                $query_string = '&meeting_key=id_bigint&meeting_key_value='.$details;
+                $center_me = 0;
+                $details = ','.$details;
+                $value = $_SESSION['bmlt_details'];
+                if ($value == null) {
+                    return "";
+                }
+                if (!in_array('HY',explode(',', $value['formats'])) && in_array('VM',explode(',', $value['formats']))) {
+                    return "";
+                }
+                $lat = $value['latitude'];
+                $lng = $value['longitude'];
+            } else $details = '';
             include(dirname(__FILE__)."/lang/translate_".$lang_enum.".php");
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps		        
               $the_new_content = $this->configure_javascript($translate, $query_string, $lang_enum);
                 $the_new_content .= '<div class="bmlt_map_container_div"  id="bmlt_map_container" >';  // This starts off hidden, and is revealed by JS.
                 $the_new_content .= '<div dir="ltr" class="bmlt_search_map_div" id="bmlt_search_map_div">';
-                $the_new_content .= '<script type="text/javascript">var g_start_week = 2; document.getElementById("bmlt_map_container").style.display=\'block\';c_mm = new MeetingMap( document.getElementById(\'bmlt_search_map_div\'), {\'latitude\':'.$lat.',\'longitude\':'.$lng.',\'zoom\':'.$zoom.'});</script>';
+                $the_new_content .= '<script type="text/javascript">var g_start_week = 2; document.getElementById("bmlt_map_container").style.display=\'block\';c_mm = new MeetingMap( document.getElementById(\'bmlt_search_map_div\'), {\'latitude\':'.$lat.',\'longitude\':'.$lng.',\'zoom\':'.$zoom.'}'.$details.');</script>';
                 $the_new_content .= '</div>
 		        
 		        <div id="filter_modal" class="modal">
@@ -583,8 +598,10 @@ if (!class_exists("BMLTMeetingMap")) {
                 });
                 return $the_new_content;
         }
-        
-        
+        /** Emulates the behavior from PHP 7 */
+        function hsc($field) {
+            return htmlspecialchars($field,ENT_COMPAT);
+        }
         /************************************************************************************//**
          *   \brief  This returns the global JavaScript stuff for the new map search that only   *
          *           only needs to be loaded once.                                               *
@@ -600,28 +617,27 @@ if (!class_exists("BMLTMeetingMap")) {
             $ret = '';
             // Declare the various globals and display strings. This is how we pass strings to the JavaScript, as opposed to the clunky way we do it in the root server.
             $ret .= '<script type="text/javascript">' . (defined('_DEBUG_MODE_') ? "\n" : '');
-            $ret .= 'var c_g_no_meetings_found = "'.htmlspecialchars($translate['NO_MEETINGS']).'";';
-            $ret .= 'var c_g_server_error = "'.htmlspecialchars($translate['SERVER_ERROR']).'";';
-            $ret .= 'var c_g_weekdays = '.$translate['WEEKDAYS'].';';
-            $ret .= 'var c_g_weekdays_short = '.$translate['WKDYS'].';';
-            $ret .= 'var c_g_menu_search = "'.htmlspecialchars($translate['MENU_SEARCH']).'";';
-            $ret .= 'var c_g_searchPrompt = "'.htmlspecialchars($translate['SEARCH_PROMPT']).'";';
-            $ret .= 'var c_g_menu_filter = "'.htmlspecialchars($translate['MENU_FILTER']).'";';
-            $ret .= 'var c_g_menu_list = "'.htmlspecialchars($translate['MENU_LIST']).'";';
-            $ret .= 'var c_g_address_lookup_fail = "'.htmlspecialchars($translate['ADDRESS_LOOKUP_FAIL']).'";';
-            $ret .= 'var c_g_menu_nearMe = "'.htmlspecialchars($translate['MENU_NEAR_ME']).'";';
-            $ret .= 'var c_g_menu_fullscreen = "'.htmlspecialchars($translate['MENU_FULLSCREEN']).'";';
-            $ret .= 'var c_g_menu_exitFullscreen = "'.htmlspecialchars($translate['MENU_EXIT_FULLSCREEN']).'";';
-            $ret .= 'var c_g_menu_tooltip = "'.htmlspecialchars($translate['MENU_TOOLTIP']).'";';
-            
-            $ret .= 'var c_BMLTPlugin_files_uri = \''.htmlspecialchars($this->get_plugin_path()).'?\';' . (defined('_DEBUG_MODE_') ? "\n" : '');
-            $ret .= "var c_g_BMLTPlugin_images = '".htmlspecialchars($this->get_plugin_path()."/map_images")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
-            $ret .= "var c_g_BMLTPlugin_lang_dir = '".htmlspecialchars($this->get_plugin_path()."/lang")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
-            $ret .= "var c_g_BMLTPlugin_throbber_img_src = '".htmlspecialchars($this->get_plugin_path()."/map_images/Throbber.gif")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
-            $ret .= 'var c_g_map_link_text = "'.htmlspecialchars($translate['OPEN_GOOGLE']).'";';
-            $ret .= 'var c_g_hygene_header = "'.htmlspecialchars($translate['Hygene_Header']).'";';
-            $ret .= 'var c_g_hygene_button = "'.htmlspecialchars($translate['Hygene_Button']).'";';
-            $ret .= 'var c_g_hygene_back = "'.htmlspecialchars($translate['Hygene_Back']).'";';
+            $ret .= 'var c_g_no_meetings_found = "'.$this->hsc($translate['NO_MEETINGS']).'";';
+            $ret .= 'var c_g_server_error = "'.$this->hsc($translate['SERVER_ERROR']).'";';
+            $ret .= 'var c_g_weekdays = '.$this->hsc($translate['WEEKDAYS']).';';
+            $ret .= 'var c_g_weekdays_short = '.$this->hsc($translate['WKDYS']).';';
+            $ret .= 'var c_g_menu_search = "'.$this->hsc($translate['MENU_SEARCH']).'";';
+            $ret .= 'var c_g_searchPrompt = "'.$this->hsc($translate['SEARCH_PROMPT']).'";';
+            $ret .= 'var c_g_menu_filter = "'.$this->hsc($translate['MENU_FILTER']).'";';
+            $ret .= 'var c_g_menu_list = "'.$this->hsc($translate['MENU_LIST']).'";';
+            $ret .= 'var c_g_address_lookup_fail = "'.$this->hsc($translate['ADDRESS_LOOKUP_FAIL']).'";';
+            $ret .= 'var c_g_menu_nearMe = "'.$this->hsc($translate['MENU_NEAR_ME']).'";';
+            $ret .= 'var c_g_menu_fullscreen = "'.$this->hsc($translate['MENU_FULLSCREEN']).'";';
+            $ret .= 'var c_g_menu_exitFullscreen = "'.$this->hsc($translate['MENU_EXIT_FULLSCREEN']).'";';
+            $ret .= 'var c_g_menu_tooltip = "'.$this->hsc($translate['MENU_TOOLTIP']).'";';
+            $ret .= 'var c_BMLTPlugin_files_uri = \''.$this->hsc($this->get_plugin_path()).'?\';' . (defined('_DEBUG_MODE_') ? "\n" : '');
+            $ret .= "var c_g_BMLTPlugin_images = '".$this->hsc($this->get_plugin_path()."/map_images")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
+            $ret .= "var c_g_BMLTPlugin_lang_dir = '".$this->hsc($this->get_plugin_path()."/lang")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
+            $ret .= "var c_g_BMLTPlugin_throbber_img_src = '".$this->hsc($this->get_plugin_path()."/map_images/Throbber.gif")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
+            $ret .= 'var c_g_map_link_text = "'.$this->hsc($translate['OPEN_GOOGLE']).'";';
+            $ret .= 'var c_g_hygene_header = "'.$this->hsc($translate['Hygene_Header']).'";';
+            $ret .= 'var c_g_hygene_button = "'.$this->hsc($translate['Hygene_Button']).'";';
+            $ret .= 'var c_g_hygene_back = "'.$this->hsc($translate['Hygene_Back']).'";';
             $ret .= 'var c_g_region = "'.$options['region_bias'].'";';
             $ret .= 'var c_g_bounds = {';
                 $ret .= ' "north": "'.$this->options['bounds_north'].'",';
@@ -637,7 +653,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 $ret .= " '".$key."': '".$value."',";
             }
             $ret .= '};';
-            $ret .= 'var c_g_Meetings_on_Map = "'.htmlspecialchars($translate['Meetings_on_Map']).'";';
+            $ret .= 'var c_g_Meetings_on_Map = "'.$this->hsc($translate['Meetings_on_Map']).'";';
             $ret .= '</script>';
             $ret .= '<style type="text/css">.onoffswitch-inner:before {
     content: "'.$translate["Next_24_hours"].'";

@@ -1,4 +1,4 @@
-function MeetingMap(in_div, in_coords) {
+function MeetingMap(in_div, in_coords, in_details='') {
 	/****************************************************************************************
 	 *										CLASS VARIABLES									*
 	 ****************************************************************************************/
@@ -17,7 +17,7 @@ function MeetingMap(in_div, in_coords) {
 	 *	\brief Load the map and set it up.													*
 	 ****************************************************************************************/
 
-	function load_map(in_div, in_location_coords) {
+	function load_map(in_div, in_location_coords, in_details) {
 		if (in_div) {
 			in_div.myThrobber = null;
 
@@ -31,8 +31,10 @@ function MeetingMap(in_div, in_coords) {
 				}, false);
 				show_throbber();
 				var pixel_width = in_div.offsetWidth;
-				g_delegate.addControl(createFilterMeetingsToggle(), 'topleft');
-				g_delegate.addControl(createMenuButton(pixel_width), 'topright');
+				if (in_details=='') {
+					g_delegate.addControl(createFilterMeetingsToggle(), 'topleft');
+					g_delegate.addControl(createMenuButton(pixel_width), 'topright');
+				}
 			};
 		};
 	};
@@ -318,11 +320,11 @@ function MeetingMap(in_div, in_coords) {
 		for (i=0; i<myFormatKeys.length; i++) {
 			theFormat = g_format_hash[myFormatKeys[i]];
 			if (typeof theFormat == 'undefined') continue;
-			if (theFormat.format_type_enum=='FC2' || theFormat.format_type_enum=='FC3' || 
+			if (theFormat.format_type_enum=='FC2' || theFormat.format_type_enum=='FC3' || theFormat.format_type_enum=='Covid' || 
 				((typeof theFormat.format_type_enum!=='undefined')&&theFormat.format_type_enum.charAt(0)=='O')) {
 				regFormats.push(theFormat);
 			}
-			else if (theFormat.format_type_enum=='Covid') {
+			else if (theFormat.format_type_enum=='xCovidx') {
 				covidFormats.push(theFormat);
 				address_class = listView ? 'active' : 'hidden';
 				hygene_class = 'active';
@@ -976,7 +978,7 @@ function MeetingMap(in_div, in_coords) {
 	 *								MAIN FUNCTIONAL INTERFACE								*
 	 ****************************************************************************************/
 	if (in_div && in_coords) {
-		load_map(in_div, in_coords);
+		load_map(in_div, in_coords, in_details);
 		this.loadAllMeetingsExt = loadAllMeetings;
 		this.openTableViewExt = openTableView;
 	};
