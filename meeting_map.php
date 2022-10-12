@@ -509,12 +509,14 @@ if (!class_exists("BMLTMeetingMap")) {
                 if ($value == null) {
                     return "";
                 }
-                if (!in_array('HY',explode(',', $value['formats'])) && in_array('VM',explode(',', $value['formats']))) {
+                if (!in_array('HY', explode(',', $value['formats'])) && in_array('VM', explode(',', $value['formats']))) {
                     return "";
                 }
                 $lat = $value['latitude'];
                 $lng = $value['longitude'];
-            } else $details = '';
+            } else {
+                $details = '';
+            }
             include(dirname(__FILE__)."/lang/translate_".$lang_enum.".php");
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps		        
               $the_new_content = $this->configure_javascript($translate, $query_string, $lang_enum);
@@ -599,8 +601,9 @@ if (!class_exists("BMLTMeetingMap")) {
                 return $the_new_content;
         }
         /** Emulates the behavior from PHP 7 */
-        function hsc($field) {
-            return htmlspecialchars($field,ENT_COMPAT);
+        private function hsc($field)
+        {
+            return htmlspecialchars($field, ENT_COMPAT);
         }
         /************************************************************************************//**
          *   \brief  This returns the global JavaScript stuff for the new map search that only   *
