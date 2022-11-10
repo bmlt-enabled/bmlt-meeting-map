@@ -3,7 +3,7 @@
 Plugin Name: BMLT Meeting Map
 Description: Simple responsive Meeting Map.
 Author: BmltEnabled
-Version: 2.4
+Version: 2.5
 */
 /* Disallow direct access to the plugin file */
 if (basename($_SERVER['PHP_SELF']) == basename(__FILE__)) {
@@ -421,14 +421,6 @@ if (!class_exists("BMLTMeetingMap")) {
                 update_option($this->optionsName, $theOptions);
             }
             $this->options = $theOptions;
-            $path_parts = pathinfo($this->options['root_server']);
-            if (isset($path_parts['extension'])) {
-                $this->options['root_server'] = $path_parts['dirname'];
-            }
-            $parts = parse_url($this->options['root_server']);
-            if (isset($parts['scheme']) && isset($parts['host']) && isset($parts['path'])) {
-                //$this->options['root_server'] = $parts['scheme'].'://'.$parts['host'].$parts['path'];
-            }
             if (!isset($this->options['tile_provider'])) {
                 $this->options['tile_provider'] = 'google';
             }
@@ -469,13 +461,6 @@ if (!class_exists("BMLTMeetingMap")) {
         // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
         public function save_admin_options()
         {
-            // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-            $path_parts = pathinfo($this->options['root_server']);
-            if (isset($path_parts['extension']) && $path_parts['extension']) {
-                $this->options['root_server'] = $path_parts['dirname'];
-            }
-            $parts = parse_url($this->options['root_server']);
-            //$this->options['root_server'] = $parts['scheme'].'://'.$parts['host'].$parts['path'];
             $this->options['root_server'] = untrailingslashit($this->options['root_server']);
             update_option($this->optionsName, $this->options);
             return;
@@ -483,9 +468,6 @@ if (!class_exists("BMLTMeetingMap")) {
         // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
         public function meeting_map($att)
         {
-            // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-            while (@ob_end_flush()) {
-            }
             if (!isset($this->options['lat']) || trim($this->options['lat'])=='') {
                 $this->options['lat'] = 52.519575;
             }
