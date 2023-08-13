@@ -571,9 +571,9 @@ if (!class_exists("BMLTMeetingMap")) {
 		        </div>';
                 
                 $root_server = $this->options['root_server'];
-                if (isset($_GET['root_server']) && filter_var($_GET['root_server'], FILTER_VALIDATE_URL)) {
-                    $root_server = $_GET['root_server'];
-                }  
+            if (isset($_GET['root_server']) && filter_var($_GET['root_server'], FILTER_VALIDATE_URL)) {
+                $root_server = $_GET['root_server'];
+            }
                 add_action('wp_footer', function () use ($root_server, $query_string, $center_me, $goto, $lang_enum) {
                     if (ob_get_length()) {
                         ob_flush();
