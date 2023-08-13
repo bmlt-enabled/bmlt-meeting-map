@@ -506,29 +506,19 @@ if (!class_exists("BMLTMeetingMap")) {
                 $goto = $gotoTmp;
                 $center_me = 0;
             }
+            $meeting_details = ',false';
             $details = isset($_GET['meeting-id']) ? sanitize_text_field($_GET['meeting-id']) : '';
             if ($details!='') {
                 $query_string = '&meeting_key=id_bigint&meeting_key_value='.$details;
                 $center_me = 0;
-                $details = ','.$details;
-                $value = $_SESSION['bmlt_details'];
-                if ($value == null) {
-                    return "";
-                }
-                if (!in_array('HY', explode(',', $value['formats'])) && in_array('VM', explode(',', $value['formats']))) {
-                    return "";
-                }
-                $lat = $value['latitude'];
-                $lng = $value['longitude'];
-            } else {
-                $details = '';
+                $meeting_details = ',true';
             }
             include(dirname(__FILE__)."/lang/translate_".$lang_enum.".php");
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps		        
               $the_new_content = $this->configure_javascript($translate, $query_string, $lang_enum);
                 $the_new_content .= '<div class="bmlt_map_container_div"  id="bmlt_map_container" >';  // This starts off hidden, and is revealed by JS.
                 $the_new_content .= '<div dir="ltr" class="bmlt_search_map_div" id="bmlt_search_map_div">';
-                $the_new_content .= '<script type="text/javascript">var g_start_week = 2; document.getElementById("bmlt_map_container").style.display=\'block\';c_mm = new MeetingMap( document.getElementById(\'bmlt_search_map_div\'), {\'latitude\':'.$lat.',\'longitude\':'.$lng.',\'zoom\':'.$zoom.'}'.$details.');</script>';
+                $the_new_content .= '<script type="text/javascript">var g_start_week = 2; document.getElementById("bmlt_map_container").style.display=\'block\';c_mm = new MeetingMap( document.getElementById(\'bmlt_search_map_div\'), {\'latitude\':'.$lat.',\'longitude\':'.$lng.',\'zoom\':'.$zoom.'}'.$meeting_details.');</script>';
                 $the_new_content .= '</div>
 		        
 		        <div id="filter_modal" class="modal">
@@ -581,20 +571,23 @@ if (!class_exists("BMLTMeetingMap")) {
 		        </div>';
                 
                 $root_server = $this->options['root_server'];
+                if (isset($_GET['root_server']) && filter_var($_GET['root_server'], FILTER_VALIDATE_URL)) {
+                    $root_server = $_GET['root_server'];
+                }  
                 add_action('wp_footer', function () use ($root_server, $query_string, $center_me, $goto, $lang_enum) {
                     if (ob_get_length()) {
                         ob_flush();
                     }
                     flush();
-                    $this_connected = $this->testRootServer($this->options['root_server']);
+                    $this_connected = $this->testRootServer($root_server);
                     if ($this_connected == false) {
-                        echo "<h1>Could not connect to BMLT Server: ".$this->options['root_server']."</h1>";
+                        echo "<h1>Could not connect to BMLT Server: ".$root_server."</h1>";
                         return;
                     } else {
                         $versionString = simplexml_load_string($this_connected)->serverVersion->readableString;
                         $versionParts = explode('.', $versionString);
                         if (intval($versionParts[0])*100+intval($versionParts[1]) < intval(213)) {
-                            echo "<h1>BMLT Server: ".$this->options['root_server']." has incompatible version ".$versionString.". The meeeting map requires at least 2.13</h1>";
+                            echo "<h1>BMLT Server: ".$root_server." has incompatible version ".$versionString.". The meeeting map requires at least 2.13</h1>";
                             return;
                         }
                     }

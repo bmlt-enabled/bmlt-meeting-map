@@ -1,4 +1,4 @@
-function MeetingMap(in_div, in_coords, in_details='') {
+function MeetingMap(in_div, in_coords, in_meeting_detail) {
 	/****************************************************************************************
 	 *										CLASS VARIABLES									*
 	 ****************************************************************************************/
@@ -17,7 +17,7 @@ function MeetingMap(in_div, in_coords, in_details='') {
 	 *	\brief Load the map and set it up.													*
 	 ****************************************************************************************/
 
-	function load_map(in_div, in_location_coords, in_details) {
+	function load_map(in_div, in_location_coords) {
 		if (in_div) {
 			in_div.myThrobber = null;
 
@@ -31,7 +31,7 @@ function MeetingMap(in_div, in_coords, in_details='') {
 				}, false);
 				show_throbber();
 				var pixel_width = in_div.offsetWidth;
-				if (in_details=='') {
+				if (!in_meeting_detail) {
 					g_delegate.addControl(createFilterMeetingsToggle(), 'topleft');
 					g_delegate.addControl(createMenuButton(pixel_width), 'topright');
 				}
@@ -77,6 +77,13 @@ function MeetingMap(in_div, in_coords, in_details='') {
 	};
 	function loadAllMeetings(meetings_response_object, formats_response_object, centerMe, goto) {
 		g_response_object = meetings_response_object;
+		if (in_meeting_detail) {
+			if (g_response_object.length > 0) {
+				in_coords.latitude = g_response_object[0].latitude;
+				in_coords.longitude = g_response_object[0].longitude;
+			}
+			load_map(in_div, in_coords);
+		}
 		g_format_hash = create_format_hash(formats_response_object);
 		search_response_callback();
 		if (centerMe != 0) {
@@ -978,7 +985,7 @@ function MeetingMap(in_div, in_coords, in_details='') {
 	 *								MAIN FUNCTIONAL INTERFACE								*
 	 ****************************************************************************************/
 	if (in_div && in_coords) {
-		load_map(in_div, in_coords, in_details);
+		if (!in_meeting_detail) load_map(in_div, in_coords);
 		this.loadAllMeetingsExt = loadAllMeetings;
 		this.openTableViewExt = openTableView;
 	};

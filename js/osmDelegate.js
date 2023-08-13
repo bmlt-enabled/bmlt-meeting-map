@@ -199,6 +199,7 @@ function addControl(div,pos) {
 	  xmlHttp.open('GET', url + getParamString(params), true);
 	  xmlHttp.responseType = 'json';
 	  xmlHttp.setRequestHeader('Accept', 'application/json');
+	  xmlHttp.setRequestHeader('Accept', '*/*');
 	  xmlHttp.send(null);
 	};
 	function getParamString(obj, existingUrl, uppercase) {
