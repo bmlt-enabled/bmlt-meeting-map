@@ -3,7 +3,7 @@
 Plugin Name: BMLT Meeting Map
 Description: Simple responsive Meeting Map.
 Author: BmltEnabled
-Version: 2.5
+Version: 2.5.1
 */
 /* Disallow direct access to the plugin file */
 if (basename($_SERVER['PHP_SELF']) == basename(__FILE__)) {
@@ -207,7 +207,7 @@ if (!class_exists("BMLTMeetingMap")) {
                     die('Whoops! There was a problem with the data you posted. Please go back and try again.');
                 }
                 if (filter_var($_POST['root_server'], FILTER_VALIDATE_URL)) {
-                    $this->options['root_server'] = $_POST['root_server'];
+                    $this->options['root_server'] = sanitize_url($_POST['root_server']);
                 } else {
                     $this->options['root_server'] = '';
                 }
@@ -496,7 +496,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 'center_me' => 0,
                 'goto' => ''
             ), $att, 'bmlt_meeting_map'));
-            $gotomeTmp = isset($_GET['gotoMe']) ? $_sanitize_text_field($_GET['gotoMe']) : '';
+            $gotomeTmp = isset($_GET['gotoMe']) ? sanitize_text_field($_GET['gotoMe']) : '';
             if ($gotomeTmp!='' && $gotomeTmp!='0') {
                 $center_me = 1;
                 $goto = '';
@@ -572,7 +572,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 
                 $root_server = $this->options['root_server'];
             if (isset($_GET['root_server']) && filter_var($_GET['root_server'], FILTER_VALIDATE_URL)) {
-                $root_server = $_GET['root_server'];
+                $root_server = sanitize_url($_GET['root_server']);
             }
                 add_action('wp_footer', function () use ($root_server, $query_string, $center_me, $goto, $lang_enum) {
                     if (ob_get_length()) {
