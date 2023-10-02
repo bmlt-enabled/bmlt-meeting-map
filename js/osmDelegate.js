@@ -1,7 +1,8 @@
-function MapDelegate() {
+function MapDelegate(in_config) {
+	const config = in_config;
     var g_icon_image_single = L.icon({
-		iconUrl: c_g_BMLTPlugin_images+"/NAMarker.png",
-		shadowUrl: c_g_BMLTPlugin_images+"/NAMarkerS.png",
+		iconUrl: config.BMLTPlugin_images+"/NAMarker.png",
+		shadowUrl: config.BMLTPlugin_images+"/NAMarkerS.png",
 		iconSize:     [23, 32], // size of the icon
 		shadowSize:   [43, 32], // size of the shadow
 		iconAnchor:   [12, 32], // point of the icon which will correspond to marker's location
@@ -9,8 +10,8 @@ function MapDelegate() {
 		popupAnchor:  [0, -32] // point from which the popup should open relative to the iconAnchor
 	});
 	var g_icon_image_multi = L.icon({
-		iconUrl: c_g_BMLTPlugin_images+"/NAMarkerG.png",
-		shadowUrl: c_g_BMLTPlugin_images+"/NAMarkerS.png",
+		iconUrl: config.BMLTPlugin_images+"/NAMarkerG.png",
+		shadowUrl: config.BMLTPlugin_images+"/NAMarkerS.png",
 		iconSize:     [23, 32], // size of the icon
 		shadowSize:   [43, 32], // size of the shadow
 		iconAnchor:   [12, 32], // point of the icon which will correspond to marker's location
@@ -18,8 +19,8 @@ function MapDelegate() {
 		popupAnchor:  [0, -32] // point from which the popup should open relative to the iconAnchor
 	});
 	var g_icon_image_selected = L.icon({
-		iconUrl: c_g_BMLTPlugin_images+"/NAMarkerSel.png",
-		shadowUrl: c_g_BMLTPlugin_images+"/NAMarkerS.png",
+		iconUrl: config.BMLTPlugin_images+"/NAMarkerSel.png",
+		shadowUrl: config.BMLTPlugin_images+"/NAMarkerS.png",
 		iconSize:     [23, 32], // size of the icon
 		shadowSize:   [43, 32], // size of the shadow
 		iconAnchor:   [12, 32], // point of the icon which will correspond to marker's location
@@ -30,30 +31,37 @@ function MapDelegate() {
 	var g_main_map;
 	var g_tileLayer;
     function createMap(in_div, in_location_coords) {
-        if ( in_location_coords ) {
-            myOptions = {
-                'center': new L.latLng ( in_location_coords.latitude, in_location_coords.longitude ),
-                'zoom': in_location_coords.zoom,
+		if (! in_location_coords ) return null;
+		myOptions = {
                 'minZoom': 6,
                 'maxZoom': 18,
 				'doubleClickZoom' : false,
 				'scrollWheelZoom' : false
-			};
-			var	pixel_width = in_div.offsetWidth;
-			var	pixel_height = in_div.offsetHeight;
-			if (pixel_height > pixel_width*1.4) {
-				in_div.style.height = (pixel_width*1.6)+'px';
-				in_div.parentNode.style.height = in_div.style.height;
-			}
-            g_main_map = new L.Map ( in_div, myOptions );
-            g_tileLayer = L.tileLayer(c_g_tileUrl,c_g_tileOptions).addTo(g_main_map);
-			g_main_map.zoomControl.setPosition('bottomright');
-			g_main_map.on('moveend',function() {
-				g_tileLayer.redraw();
-			});
-            return g_main_map;
-        }
-        return null;
+		};
+		if ( in_location_coords ) {
+			myOptions = Object.assign(myOptions, {
+				'center': new L.latLng ( in_location_coords.latitude, in_location_coords.longitude ),
+				'zoom': in_location_coords.zoom});
+		}
+		var	pixel_width = in_div.offsetWidth;
+		if (pixel_width == 0) {
+			pixel_width = in_div.parentNode.offsetWidth;
+		}
+		var	pixel_height = in_div.offsetHeight;
+		if (pixel_height == 0) {
+			pixel_height = pixel_width;
+		}
+		if (pixel_height > pixel_width*1.4) {
+			in_div.style.height = (pixel_width*1.6)+'px';
+			in_div.parentNode.style.height = in_div.style.height;
+		}
+        g_main_map = new L.Map ( in_div, myOptions );
+        g_tileLayer = L.tileLayer(config.tileUrl,config.tileOptions).addTo(g_main_map);
+		g_main_map.zoomControl.setPosition('bottomright');
+		g_main_map.on('moveend',function() {
+			g_tileLayer.redraw();
+		});
+        return g_main_map;
     }
     function addListener(ev,f,once) {
 		if (ev=='idle') {
@@ -218,7 +226,7 @@ function addControl(div,pos) {
 		return (!existingUrl || existingUrl.indexOf('?') === -1 ? '?' : '&') + params.join('&');
 	}
 	function geocode(query, params, cb, filterMeetings) {
-		var serviceUrl = c_g_nominatimUrl;
+		var serviceUrl = config.nominatimUrl;
 		getJSON(
 		  serviceUrl + 'search',
 		  L.extend(
@@ -258,21 +266,21 @@ function addControl(div,pos) {
 				});
 			});
         } else {
-            alert ( c_g_address_lookup_fail );
+            alert ( config.address_lookup_fail );
         };
 	};
     function callGeocoder(in_loc, filterMeetings) {
 		geoCodeParams = {};
-		if (c_g_region.trim() !== '') {
-			geoCodeParams.countrycodes = c_g_region;
+		if (config.region.trim() !== '') {
+			geoCodeParams.countrycodes = config.region;
 		}
-		if (c_g_bounds
-			&&  c_g_bounds.north && c_g_bounds.north.trim()!== ''
-			&&  c_g_bounds.east && c_g_bounds.east.trim()!== ''
-			&&  c_g_bounds.south && c_g_bounds.south.trim()!== ''
-			&&  c_g_bounds.west && c_g_bounds.west.trim()!== '') {
-				geoCodeParams.viewbox = c_g_bounds.south+","+c_g_bounds.west+","+
-					                    c_g_bounds.north+","+c_g_bounds.east;
+		if (config.bounds
+			&&  config.bounds.north && config.bounds.north.trim()!== ''
+			&&  config.bounds.east && config.bounds.east.trim()!== ''
+			&&  config.bounds.south && config.bounds.south.trim()!== ''
+			&&  config.bounds.west && config.bounds.west.trim()!== '') {
+				geoCodeParams.viewbox = config.bounds.south+","+config.bounds.west+","+
+					                    config.bounds.north+","+config.bounds.east;
 		}
         var	geocoder = geocode(in_loc, geoCodeParams, geoCallback, filterMeetings);
     }
@@ -284,6 +292,10 @@ function addControl(div,pos) {
 	}
 	function invalidateSize() {
 		g_main_map.invalidateSize();
+	}
+	function fitBounds(locations) {
+		const bounds = locations.reduce(function(b,lat_lng) {b.extend(lat_lng); return b;}, L.latLngBounds());
+		g_main_map.fitBounds(bounds);
 	}
     this.createMap = createMap;
     this.addListener = addListener;
@@ -298,6 +310,7 @@ function addControl(div,pos) {
 	this.getBounds = getBounds;
 	this.invalidateSize = invalidateSize;
 	this.zoomOut = zoomOut;
+	this.fitBounds = fitBounds;
 }
 MapDelegate.prototype.createMap = null;
 MapDelegate.prototype.addListener = null;
@@ -312,3 +325,4 @@ MapDelegate.prototype.contains = null;
 MapDelegate.prototype.getBounds = null;
 MapDelegate.prototype.invalidateSize = null;
 MapDelegate.prototype.zoomOut = null;
+MapDelegate.prototype.fitBounds = null;

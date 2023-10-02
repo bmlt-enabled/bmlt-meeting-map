@@ -1,44 +1,42 @@
-    function MapDelegate() {
-        var g_icon_image_single = new google.maps.MarkerImage ( c_g_BMLTPlugin_images+"/NAMarker.png", new google.maps.Size(23, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
-	    var g_icon_image_multi = new google.maps.MarkerImage ( c_g_BMLTPlugin_images+"/NAMarkerG.png", new google.maps.Size(23, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
-	    var g_icon_image_selected = new google.maps.MarkerImage ( c_g_BMLTPlugin_images+"/NAMarkerSel.png", new google.maps.Size(23, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
-	    var g_icon_shadow = new google.maps.MarkerImage( c_g_BMLTPlugin_images+"/NAMarkerS.png", new google.maps.Size(43, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
+    function MapDelegate(in_config) {
+        const config = in_config;
+        var g_icon_image_single = new google.maps.MarkerImage ( config.BMLTPlugin_images+"/NAMarker.png", new google.maps.Size(23, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
+	    var g_icon_image_multi = new google.maps.MarkerImage ( config.BMLTPlugin_images+"/NAMarkerG.png", new google.maps.Size(23, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
+	    var g_icon_image_selected = new google.maps.MarkerImage ( config.BMLTPlugin_images+"/NAMarkerSel.png", new google.maps.Size(23, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
+	    var g_icon_shadow = new google.maps.MarkerImage( config.BMLTPlugin_images+"/NAMarkerS.png", new google.maps.Size(43, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
 	    var g_icon_shape = { coord: [16,0,18,1,19,2,20,3,21,4,21,5,22,6,22,7,22,8,22,9,22,10,22,11,22,12,22,13,22,14,22,15,22,16,21,17,21,18,22,19,20,20,19,21,20,22,18,23,17,24,18,25,17,26,15,27,14,28,15,29,12,30,12,31,10,31,10,30,9,29,8,28,8,27,7,26,6,25,5,24,5,23,4,22,3,21,3,20,2,19,1,18,1,17,1,16,0,15,0,14,0,13,0,12,0,11,0,10,0,9,0,8,0,7,1,6,1,5,2,4,2,3,3,2,5,1,6,0,16,0], type: 'poly' };
         var g_main_map;
         var	g_allMarkers = [];				///< Holds all the markers.
 
         function createMap(in_div, in_location_coords) {
-            if ( in_location_coords ) {
-                var myOptions = {
-                    'center': new google.maps.LatLng ( in_location_coords.latitude, in_location_coords.longitude ),
-                    'zoom': in_location_coords.zoom,
-                    'mapTypeId': google.maps.MapTypeId.ROADMAP,
-                    'zoomControl': true,
-                    'minZoom': 6,
-                    'mapTypeControl': false,
-                    'streetViewControl': false,
-                    'disableDoubleClickZoom' : true,
-                    'draggableCursor': "pointer",
-                    'scaleControl' : true,
-                    'fullscreenControl': false,
-//						'fullscreenControlOptions' : {
-//					        position: google.maps.ControlPosition.TOP_RIGHT
-//						}
-                };
-
-                var	pixel_width = in_div.offsetWidth;
-                var	pixel_height = in_div.offsetHeight;
-            
-                if ( (pixel_width < 640) || (pixel_height < 640) ) {
-                    myOptions.scrollwheel = true;
-                    myOptions.zoomControlOptions = { 'style': google.maps.ZoomControlStyle.SMALL };
-                } else {
-                    myOptions.zoomControlOptions = { 'style': google.maps.ZoomControlStyle.LARGE };
-                };
-                g_main_map = new google.maps.Map ( in_div, myOptions );
-                return g_main_map;
+            if (! in_location_coords ) return null;
+            var myOptions = {
+                'mapTypeId': google.maps.MapTypeId.ROADMAP,
+                'zoomControl': true,
+                'minZoom': 6,
+                'mapTypeControl': false,
+                'streetViewControl': false,
+                'disableDoubleClickZoom' : true,
+                'draggableCursor': "pointer",
+                'scaleControl' : true,
+                'fullscreenControl': false,
             };
-            return null;
+            if ( in_location_coords ) {
+                myOptions = Object.assign(myOptions, {
+                    'center': new google.maps.LatLng ( in_location_coords.latitude, in_location_coords.longitude ),
+                    'zoom': in_location_coords.zoom
+                });
+            }
+            var	pixel_width = in_div.offsetWidth;
+            var	pixel_height = in_div.offsetHeight;
+            
+            if ( (pixel_width < 640) || (pixel_height < 640) ) {
+                myOptions.scrollwheel = true;                    myOptions.zoomControlOptions = { 'style': google.maps.ZoomControlStyle.SMALL };
+            } else {
+                myOptions.zoomControlOptions = { 'style': google.maps.ZoomControlStyle.LARGE };
+            };
+            g_main_map = new google.maps.Map ( in_div, myOptions );
+            return g_main_map;
         }
         function addListener(ev,f,once) {
             var e = ev;
@@ -54,6 +52,13 @@
             } else {
                 google.maps.event.addListener( g_main_map, e, f);
             }
+        }
+        function fitBounds(lat_lng) {
+            const bounds = filteredMeetings.reduce(
+                function (bounds, m) {
+                    return bounds.extend(new google.maps.LatLng(m[0], m[1]));
+                }, new google.maps.LatLngBounds());
+            g_main_map.fitBounds(bounds);
         }
         function setViewToPosition(position, filterMeetings) {
             var latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
@@ -295,7 +300,7 @@
                 g_main_map.panTo ( in_geocode_response[0].geometry.location );
                 google.maps.event.addListenerOnce( g_main_map, 'idle', callback);
         } else {
-            alert ( c_g_address_lookup_fail );
+            alert ( config.address_lookup_fail );
         };
     };
         function callGeocoder(in_loc, filterMeetings) {
@@ -304,17 +309,17 @@
             if ( geocoder )
             {
                 var geoCodeParams = { 'address': in_loc };
-                if (c_g_region.trim() !== '') {
-                    geoCodeParams.region = c_g_region;
+                if (config.region.trim() !== '') {
+                    geoCodeParams.region = config.region;
                 }
-                if (c_g_bounds
-                &&  c_g_bounds.north && c_g_bounds.north.trim()!== ''
-                &&  c_g_bounds.east && c_g_bounds.east.trim()!== ''
-                &&  c_g_bounds.south && c_g_bounds.south.trim()!== ''
-                &&  c_g_bounds.west && c_g_bounds.west.trim()!== '') {
+                if (config.bounds
+                &&  config.bounds.north && config.bounds.north.trim()!== ''
+                &&  config.bounds.east && config.bounds.east.trim()!== ''
+                &&  config.bounds.south && config.bounds.south.trim()!== ''
+                &&  config.bounds.west && config.bounds.west.trim()!== '') {
                     geoCodeParams.bounds = new google.maps.LatLngBounds(
-                        new google.maps.LatLng(c_g_bounds.south, c_g_bounds.west), 
-                        new google.maps.LatLng(c_g_bounds.north, c_g_bounds.east));
+                        new google.maps.LatLng(config.bounds.south, config.bounds.west), 
+                        new google.maps.LatLng(config.bounds.north, config.bounds.east));
                 }
                 var callback = geoCallback.bind({filterMeetings:filterMeetings});
                 var	status = geocoder.geocode ( geoCodeParams, callback );
@@ -323,24 +328,24 @@
                 {
                     if ( google.maps.INVALID_REQUEST != status )
                     {
-                        alert ( c_g_address_lookup_fail );
+                        alert ( config.address_lookup_fail );
                     }
                     else
                     {
                         if ( google.maps.ZERO_RESULTS != status )
                         {
-                            alert ( c_g_address_lookup_fail );
+                            alert ( config.address_lookup_fail );
                         }
                         else
                         {
-                            alert ( c_g_server_error );
+                            alert ( config.server_error );
                         };
                     };
                 };
             }
             else	// None of that stuff is defined if we couldn't create the geocoder.
             {
-                alert ( c_g_server_error );
+                alert ( config.server_error );
             };
         }
         function invalidateSize() {
@@ -358,6 +363,7 @@
         this.getBounds = getBounds;
         this.invalidateSize = invalidateSize;
         this.zoomOut = zoomOut;
+        this.fitBounds = fitBounds;
     }
     MapDelegate.prototype.createMap = null;
     MapDelegate.prototype.addListener = null;
@@ -372,3 +378,4 @@
     MapDelegate.prototype.getBounds = null;
     MapDelegate.prototype.invalidateSize = null;
     MapDelegate.prototype.zoomOut = null;
+    MapDelegate.prototype.fitBounds = null;

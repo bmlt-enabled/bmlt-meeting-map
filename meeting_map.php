@@ -27,7 +27,9 @@ if (!class_exists("BMLTMeetingMap")) {
                 add_action("admin_menu", array(&$this, "admin_menu_link"));
             } else {
                 // Front end
-                add_action("wp_enqueue_scripts", array(&$this, "enqueue_frontend_files"));
+                add_action("wp_enqueue_scripts", array(&$this, "enqueue_frontend_files_if_needed"));
+                add_action("crouton_map_enqueue_scripts", array(&$this, "enqueue_frontend_files"), 0);
+                add_filter("crouton_map_create_control", array(&$this, "create_meeting_map"), 10, 2);
                 add_shortcode('bmlt_meeting_map', array(
                     &$this,
                     "meeting_map"
@@ -129,34 +131,40 @@ if (!class_exists("BMLTMeetingMap")) {
          * @desc Adds JS/CSS to the header
          */
         // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-        public function enqueue_frontend_files()
+        public function enqueue_frontend_files_if_needed()
         {
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
             if ($this->has_shortcode()) {
-                if ($this->options['tile_provider'] == 'google') {
-                    $gKey = '';
-                    if (isset($this->options['api_key']) && ('' != $this->options['api_key']) && ('INVALID' != $this->options['api_key'])) {
-                        $gKey = $this->options['api_key'];
-                    }
-                    $googleJs = $gKey;
-                    if (!empty($this->options['region_bias'])) {
-                        $googleJs .= '&region='.strtoupper($this->options['region_bias']);
-                    }
-
-                    wp_enqueue_script('googlemaps', 'https://maps.googleapis.com/maps/api/js?libraries=geometry&key='.$googleJs, false, '3');
-                    wp_enqueue_style("snazzy-info-window", plugin_dir_url(__FILE__) . "css/snazzy-info-window.min.css", false, filemtime(plugin_dir_path(__FILE__) . "css/snazzy-info-window.min.css"), false);
-                    wp_enqueue_style("meeting_map", plugin_dir_url(__FILE__) . "css/meeting_map.css", false, filemtime(plugin_dir_path(__FILE__) . "css/meeting_map.css"), false);
-                    wp_enqueue_script("snazzy-info-window", plugin_dir_url(__FILE__) . "js/snazzy-info-window.min.js", false, filemtime(plugin_dir_path(__FILE__) . "js/snazzy-info-window.min.js"), true);
-                    wp_enqueue_script("gmapsDelegate", plugin_dir_url(__FILE__) . "js/gmapsDelegate.js", false, filemtime(plugin_dir_path(__FILE__) . "js/gmapsDelegate.js"), false);
-                    wp_enqueue_script("meeting_map", plugin_dir_url(__FILE__) . "js/meeting_map.js", false, filemtime(plugin_dir_path(__FILE__) . "js/meeting_map.js"), false);
-                } else {
-                    wp_enqueue_style("leaflet", plugin_dir_url(__FILE__) . "css/leaflet.css", false, filemtime(plugin_dir_path(__FILE__) . "css/leaflet.css"), false);
-                    wp_enqueue_style("meeting_map", plugin_dir_url(__FILE__) . "css/meeting_map.css", false, filemtime(plugin_dir_path(__FILE__) . "css/meeting_map.css"), false);
-                    wp_enqueue_script("leaflet", plugin_dir_url(__FILE__) . "js/leaflet.js", false, filemtime(plugin_dir_path(__FILE__) . "js/leaflet.js"), false);
-                    //wp_enqueue_script("geocoder", plugin_dir_url(__FILE__) . "js/nominatim.js", false, filemtime(plugin_dir_path(__FILE__) . "js/nominatim.js"), false);
-                    wp_enqueue_script("osmDelegate", plugin_dir_url(__FILE__) . "js/osmDelegate.js", false, filemtime(plugin_dir_path(__FILE__) . "js/osmDelegate.js"), false);
-                    wp_enqueue_script("meeting_map", plugin_dir_url(__FILE__) . "js/meeting_map.js", false, filemtime(plugin_dir_path(__FILE__) . "js/meeting_map.js"), false);
+                $this->enqueue_frontend_files();
+            }
+        }
+        // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+        public function enqueue_frontend_files()
+        {
+            wp_enqueue_script("fetch-jsonp", plugin_dir_url(__FILE__) . "js/fetch-jsonp.js", false, filemtime(plugin_dir_path(__FILE__) . "js/fetch-jsonp.js"), false);
+            if ($this->options['tile_provider'] == 'google') {
+                $gKey = '';
+                if (isset($this->options['api_key']) && ('' != $this->options['api_key']) && ('INVALID' != $this->options['api_key'])) {
+                    $gKey = $this->options['api_key'];
                 }
+                $googleJs = $gKey;
+                if (!empty($this->options['region_bias'])) {
+                    $googleJs .= '&region='.strtoupper($this->options['region_bias']);
+                }
+
+                wp_enqueue_script('googlemaps', 'https://maps.googleapis.com/maps/api/js?libraries=geometry&key='.$googleJs, false, '3');
+                wp_enqueue_style("snazzy-info-window", plugin_dir_url(__FILE__) . "css/snazzy-info-window.min.css", false, filemtime(plugin_dir_path(__FILE__) . "css/snazzy-info-window.min.css"), false);
+                wp_enqueue_style("meeting_map", plugin_dir_url(__FILE__) . "css/meeting_map.css", false, filemtime(plugin_dir_path(__FILE__) . "css/meeting_map.css"), false);
+                wp_enqueue_script("snazzy-info-window", plugin_dir_url(__FILE__) . "js/snazzy-info-window.min.js", false, filemtime(plugin_dir_path(__FILE__) . "js/snazzy-info-window.min.js"), true);
+                wp_enqueue_script("gmapsDelegate", plugin_dir_url(__FILE__) . "js/gmapsDelegate.js", false, filemtime(plugin_dir_path(__FILE__) . "js/gmapsDelegate.js"), false);
+                wp_enqueue_script("meeting_map", plugin_dir_url(__FILE__) . "js/meeting_map.js", false, filemtime(plugin_dir_path(__FILE__) . "js/meeting_map.js"), false);
+            } else {
+                wp_enqueue_style("leaflet", plugin_dir_url(__FILE__) . "css/leaflet.css", false, filemtime(plugin_dir_path(__FILE__) . "css/leaflet.css"), false);
+                wp_enqueue_style("meeting_map", plugin_dir_url(__FILE__) . "css/meeting_map.css", false, filemtime(plugin_dir_path(__FILE__) . "css/meeting_map.css"), false);
+                wp_enqueue_script("leaflet", plugin_dir_url(__FILE__) . "js/leaflet.js", false, filemtime(plugin_dir_path(__FILE__) . "js/leaflet.js"), false);
+                //wp_enqueue_script("geocoder", plugin_dir_url(__FILE__) . "js/nominatim.js", false, filemtime(plugin_dir_path(__FILE__) . "js/nominatim.js"), false);
+                wp_enqueue_script("osmDelegate", plugin_dir_url(__FILE__) . "js/osmDelegate.js", false, filemtime(plugin_dir_path(__FILE__) . "js/osmDelegate.js"), false);
+                wp_enqueue_script("meeting_map", plugin_dir_url(__FILE__) . "js/meeting_map.js", false, filemtime(plugin_dir_path(__FILE__) . "js/meeting_map.js"), false);
             }
         }
         public function testRootServer($root_server)
@@ -466,6 +474,18 @@ if (!class_exists("BMLTMeetingMap")) {
             return;
         }
         // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+        public function create_meeting_map($ret, $lang)
+        {
+            include(dirname(__FILE__)."/lang/translate_".$lang.".php");
+            $this->options['useCrouton'] = true;
+            $lat = $this->options['lat'];
+            $lng = $this->options['lng'];
+            $zoom = $this->options['zoom'];
+            $ret .= "c_mm = new MeetingMap( ".$this->createJavascriptConfig($translate, $this->options).", null,";
+            $ret .= "{'latitude':$lat,'longitude':$lng,'zoom':$zoom},true);";
+            return $ret;
+        }
+        // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
         public function meeting_map($att)
         {
             if (!isset($this->options['lat']) || trim($this->options['lat'])=='') {
@@ -516,95 +536,130 @@ if (!class_exists("BMLTMeetingMap")) {
             include(dirname(__FILE__)."/lang/translate_".$lang_enum.".php");
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps		        
               $the_new_content = $this->configure_javascript($translate, $query_string, $lang_enum);
-                $the_new_content .= '<div class="bmlt_map_container_div"  id="bmlt_map_container" >';  // This starts off hidden, and is revealed by JS.
-                $the_new_content .= '<div dir="ltr" class="bmlt_search_map_div" id="bmlt_search_map_div">';
-                $the_new_content .= '<script type="text/javascript">var g_start_week = 2; document.getElementById("bmlt_map_container").style.display=\'block\';c_mm = new MeetingMap( document.getElementById(\'bmlt_search_map_div\'), {\'latitude\':'.$lat.',\'longitude\':'.$lng.',\'zoom\':'.$zoom.'}'.$meeting_details.');</script>';
-                $the_new_content .= '</div>
-		        
-		        <div id="filter_modal" class="modal">
-		        
-		        <div class="modal-content">
+              ob_start();
+              echo $this->configure_javascript($translate, $query_string, $lang_enum);
+            ?>
+            <div class="bmlt_map_container_div"  id="bmlt_map_container" >
+            <div dir="ltr" class="bmlt_search_map_div" id="bmlt_search_map_div">
+            <script type="text/javascript">
+                document.getElementById("bmlt_map_container").style.display='block';
+                c_mm = new MeetingMap( <?php echo $this->createJavascriptConfig($translate, $this->options)?>, document.getElementById('bmlt_search_map_div'), 
+                    {'latitude':<?php echo $lat;?>,'longitude':<?php echo $lng;?>,'zoom':<?php echo $zoom;?>}<?php echo $meeting_details; ?>);
+            </script>
+            </div>
+            <div id="filter_modal" class="modal">
+            <div class="modal-content">
                 <span class="modal-title">'.$translate['Filter_Header'].'</span><span id="close_filter" class="modal-close">&times;</span>
-		        <p>
-                '.$translate['By_Language'].'<br>
+                <p>
+                <?php echo $translate['By_Language']?><br>
                 <span class="custom-dropdown">
                 <select id="language_filter">will be filled by javascript</select>
                 </span><p>
-                '.$translate['By_Format'].'<br>
+                <?php echo $translate['By_Format']?><br>
                 <span class="custom-dropdown">
                 <select id="main_filter">will be filled by javascript</select>
                 </span><p>
-                '.$translate['By_Weekday'].'<br>
+                <?php echo $translate['By_Weekday']?><br>
                 <span class="custom-dropdown">
                 <select id="day_filter">will be filled by javascript</select>
                 </span>
                 <p>
                 <input id="open_filter" type="checkbox"><span id="open_filter_text">will be filled by javascript</span>
                 <p>
-                <button id="filter_button" class="filter-button" type="button"><b>'.$translate['Filter_Button'].'</b></button><button id="reset_filter_button" class="filter-button" type="button"><b>'.$translate['Reset_Filters'].'</b></button>
-		        </div>
-		        
-		        </div>
-		        <div id="table_modal" class="modal">
-		        
-		        <div id="table_content" class="modal-content">
-		        <span class="modal-title" id="modal-title"></span><span id="close_table" class="modal-close">&times;</span>
-                <div id="modal-tab">
-                    <button id="modal-day-button" class="modal-tablinks" onclick="c_mm.openTableViewExt(event, \'modal-view-by-weekday\')">'.$translate['By_Day'].'</button>
-                    <button id="modal-city-button" class="modal-tablinks" onclick="c_mm.openTableViewExt(event, \'modal-view-by-city\')">'.$translate['By_City'].'</button>
+                <button id="filter_button" class="filter-button" type="button"><b><?php echo $translate['Filter_Button']; ?></b></button>
+                <button id="reset_filter_button" class="filter-button" type="button"><b><?php echo $translate['Reset_Filters']; ?></b></button>
                 </div>
-                <div id="modal-view-by-weekday" class="modal-tabcontent"></div>
-                <div id="modal-view-by-city" class="modal-tabcontent"></div>
-		        </div>		        
-		        </div>
-		        <div id="search_modal" class="modal">
-		        
-		        <div id="search_content" class="modal-content">
-		        <span class="modal-title">'.$translate['Find_Meetings'].'</span><span id="close_search" class="modal-close">&times;</span>
+                </div>
+                <div id="table_modal" class="modal">
+                  <div id="table_content" class="modal-content">
+                    <span class="modal-title" id="modal-title"></span><span id="close_table" class="modal-close">&times;</span>
+                    <div id="modal-tab">
+                      <button id="modal-day-button" class="modal-tablinks" onclick="c_mm.openTableViewExt(event, 'modal-view-by-weekday')"><?php echo $translate['By_Day']; ?></button>
+                      <button id="modal-city-button" class="modal-tablinks" onclick="c_mm.openTableViewExt(event, 'modal-view-by-city')"><?php echo $translate['By_City']; ?></button>
+                    </div>
+                  <div id="modal-view-by-weekday" class="modal-tabcontent"></div>
+                  <div id="modal-view-by-city" class="modal-tabcontent"></div>
+                </div>              
+                </div>
+                <div id="search_modal" class="modal">
+                <div id="search_content" class="modal-content">
+                <span class="modal-title"><?php echo $translate['Find_Meetings']; ?></span>
+                <span id="close_search" class="modal-close">&times;</span>
                 <p><div class="modal-search">
-                    '.$translate['SEARCH_PROMPT'].'
+                    <?php echo $translate['SEARCH_PROMPT']; ?>
                     <input id="goto-text" type="text">
-                    <p><button id="goto-button" class="filter-button">'.$translate['Go'].'</button>
+                    <p><button id="goto-button" class="filter-button"><?php echo $translate['Go']; ?></button>
                 </div>
-  		        </div>	
-                </div>	        
-		        </div>';
-                
+                </div>  
+                </div>          
+                </div><?php
+                $the_new_content = ob_get_clean();
                 $root_server = $this->options['root_server'];
-            if (isset($_GET['root_server']) && filter_var($_GET['root_server'], FILTER_VALIDATE_URL)) {
-                $root_server = sanitize_url($_GET['root_server']);
-            }
+                if (isset($_GET['root_server']) && filter_var($_GET['root_server'], FILTER_VALIDATE_URL)) {
+                    $root_server = sanitize_url($_GET['root_server']);
+                }
                 add_action('wp_footer', function () use ($root_server, $query_string, $center_me, $goto, $lang_enum) {
                     if (ob_get_length()) {
                         ob_flush();
                     }
                     flush();
-                    $this_connected = $this->testRootServer($root_server);
-                    if ($this_connected == false) {
-                        echo "<h1>Could not connect to BMLT Server: ".$root_server."</h1>";
-                        return;
-                    } else {
-                        $versionString = simplexml_load_string($this_connected)->serverVersion->readableString;
-                        $versionParts = explode('.', $versionString);
-                        if (intval($versionParts[0])*100+intval($versionParts[1]) < intval(213)) {
-                            echo "<h1>BMLT Server: ".$root_server." has incompatible version ".$versionString.". The meeeting map requires at least 2.13</h1>";
-                            return;
-                        }
-                    }
                     $footer_content = '<div style="display:none;">';
-                    $footer_content .= '<script type="text/javascript">c_mm.loadAllMeetingsExt(';
-                    $footer_content .=  $this->getAllMeetings($root_server, $query_string).",";
-                    $footer_content .=  $this->getAllFormats($root_server, $lang_enum).",";
+                    $footer_content .= '<script type="text/javascript">c_mm.getMeetingsExt(';
+                    $footer_content .=  '"'.$this->getURL($root_server, $query_string).'",';
                     $footer_content .= $center_me.',"'.$goto.'");</script>';
                     $footer_content .= '</div>';
                     echo $footer_content;
                 });
-                return $the_new_content;
+                      return $the_new_content;
         }
         /** Emulates the behavior from PHP 7 */
         private function hsc($field)
         {
             return htmlspecialchars($field, ENT_COMPAT);
+        }
+        private function createJavascriptConfig($translate, $options)
+        {
+            $this->enhanceTileProvider();
+            $ret = '{';
+            $ret .= 'no_meetings_found:"'.$this->hsc($translate['NO_MEETINGS']).'",';
+            $ret .= 'server_error:"'.$this->hsc($translate['SERVER_ERROR']).'",';
+            $ret .= 'weekdays:'.$this->hsc($translate['WEEKDAYS']).',';
+            $ret .= 'weekdays_short:'.$this->hsc($translate['WKDYS']).',';
+            $ret .= 'menu_search:"'.$this->hsc($translate['MENU_SEARCH']).'",';
+            $ret .= 'searchPrompt:"'.$this->hsc($translate['SEARCH_PROMPT']).'",';
+            $ret .= 'menu_filter:"'.$this->hsc($translate['MENU_FILTER']).'",';
+            $ret .= 'menu_list:"'.$this->hsc($translate['MENU_LIST']).'",';
+            $ret .= 'address_lookup_fail:"'.$this->hsc($translate['ADDRESS_LOOKUP_FAIL']).'",';
+            $ret .= 'menu_nearMe:"'.$this->hsc($translate['MENU_NEAR_ME']).'",';
+            $ret .= 'menu_fullscreen:"'.$this->hsc($translate['MENU_FULLSCREEN']).'",';
+            $ret .= 'menu_tooltip:"'.$this->hsc($translate['MENU_TOOLTIP']).'",';
+            //$ret .= 'BMLTPlugin_files_uri:\''.$this->hsc($this->get_plugin_path()).'?\',' . (defined('_DEBUG_MODE_') ? "\n" : '');
+            $ret .= "BMLTPlugin_images:'".$this->hsc($this->get_plugin_path()."/map_images")."'," . (defined('_DEBUG_MODE_') ? "\n" : '');
+            $ret .= "BMLTPlugin_lang_dir:'".$this->hsc($this->get_plugin_path()."/lang")."'," . (defined('_DEBUG_MODE_') ? "\n" : '');
+            $ret .= "BMLTPlugin_throbber_img_src:'".$this->hsc($this->get_plugin_path()."/map_images/Throbber.gif")."'," . (defined('_DEBUG_MODE_') ? "\n" : '');
+            $ret .= 'map_link_text:"'.$this->hsc($translate['OPEN_GOOGLE']).'",';
+            $ret .= 'hygene_header:"'.$this->hsc($translate['Hygene_Header']).'",';
+            $ret .= 'hygene_button:"'.$this->hsc($translate['Hygene_Button']).'",';
+            $ret .= 'hygene_back:"'.$this->hsc($translate['Hygene_Back']).'",';
+            $ret .= 'region:"'.$options['region_bias'].'",';
+            $ret .= 'bounds:{';
+                $ret .= ' "north": "'.$this->options['bounds_north'].'",';
+                $ret .= ' "east": "'.$this->options['bounds_east'].'",';
+                $ret .= ' "south": "'.$this->options['bounds_south'].'",';
+                $ret .= ' "west": "'.$this->options['bounds_west'].'"';
+            $ret .= '},';
+            $ret .= 'time_format:"'.$this->options['time_format'].'",';
+            $ret .= 'tileUrl:"'.$this->options['tile_url'].'",';
+            $ret .= 'nominatimUrl:"'.$this->options['nominatim_url'].'",';
+            $ret .= 'tileOptions:{';
+            foreach ($this->options['tile_params'] as $key => $value) {
+                $ret .= " '".$key."': '".$value."',";
+            }
+            $ret .= '},';
+            $ret .= 'Meetings_on_Map:"'.$this->hsc($translate['Meetings_on_Map']).'",';
+            $ret .= 'start_week:2,';
+            $ret .= '}';
+            return $ret;
         }
         /************************************************************************************//**
          *   \brief  This returns the global JavaScript stuff for the new map search that only   *
@@ -615,50 +670,7 @@ if (!class_exists("BMLTMeetingMap")) {
 		// phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
         public function configure_javascript($translate, $query_string, $lang_enum)
         {
-		    // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-            $this->enhanceTileProvider();
-            $options = $this->options;
-            $ret = '';
-            // Declare the various globals and display strings. This is how we pass strings to the JavaScript, as opposed to the clunky way we do it in the root server.
-            $ret .= '<script type="text/javascript">' . (defined('_DEBUG_MODE_') ? "\n" : '');
-            $ret .= 'var c_g_no_meetings_found = "'.$this->hsc($translate['NO_MEETINGS']).'";';
-            $ret .= 'var c_g_server_error = "'.$this->hsc($translate['SERVER_ERROR']).'";';
-            $ret .= 'var c_g_weekdays = '.$this->hsc($translate['WEEKDAYS']).';';
-            $ret .= 'var c_g_weekdays_short = '.$this->hsc($translate['WKDYS']).';';
-            $ret .= 'var c_g_menu_search = "'.$this->hsc($translate['MENU_SEARCH']).'";';
-            $ret .= 'var c_g_searchPrompt = "'.$this->hsc($translate['SEARCH_PROMPT']).'";';
-            $ret .= 'var c_g_menu_filter = "'.$this->hsc($translate['MENU_FILTER']).'";';
-            $ret .= 'var c_g_menu_list = "'.$this->hsc($translate['MENU_LIST']).'";';
-            $ret .= 'var c_g_address_lookup_fail = "'.$this->hsc($translate['ADDRESS_LOOKUP_FAIL']).'";';
-            $ret .= 'var c_g_menu_nearMe = "'.$this->hsc($translate['MENU_NEAR_ME']).'";';
-            $ret .= 'var c_g_menu_fullscreen = "'.$this->hsc($translate['MENU_FULLSCREEN']).'";';
-            $ret .= 'var c_g_menu_tooltip = "'.$this->hsc($translate['MENU_TOOLTIP']).'";';
-            $ret .= 'var c_BMLTPlugin_files_uri = \''.$this->hsc($this->get_plugin_path()).'?\';' . (defined('_DEBUG_MODE_') ? "\n" : '');
-            $ret .= "var c_g_BMLTPlugin_images = '".$this->hsc($this->get_plugin_path()."/map_images")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
-            $ret .= "var c_g_BMLTPlugin_lang_dir = '".$this->hsc($this->get_plugin_path()."/lang")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
-            $ret .= "var c_g_BMLTPlugin_throbber_img_src = '".$this->hsc($this->get_plugin_path()."/map_images/Throbber.gif")."';" . (defined('_DEBUG_MODE_') ? "\n" : '');
-            $ret .= 'var c_g_map_link_text = "'.$this->hsc($translate['OPEN_GOOGLE']).'";';
-            $ret .= 'var c_g_hygene_header = "'.$this->hsc($translate['Hygene_Header']).'";';
-            $ret .= 'var c_g_hygene_button = "'.$this->hsc($translate['Hygene_Button']).'";';
-            $ret .= 'var c_g_hygene_back = "'.$this->hsc($translate['Hygene_Back']).'";';
-            $ret .= 'var c_g_region = "'.$options['region_bias'].'";';
-            $ret .= 'var c_g_bounds = {';
-                $ret .= ' "north": "'.$this->options['bounds_north'].'",';
-                $ret .= ' "east": "'.$this->options['bounds_east'].'",';
-                $ret .= ' "south": "'.$this->options['bounds_south'].'",';
-                $ret .= ' "west": "'.$this->options['bounds_west'].'"';
-            $ret .= '};';
-            $ret .= 'var c_g_time_format = "'.$this->options['time_format'].'";';
-            $ret .= 'var c_g_tileUrl = "'.$this->options['tile_url'].'";';
-            $ret .= 'var c_g_nominatimUrl = "'.$this->options['nominatim_url'].'";';
-            $ret .= 'var c_g_tileOptions = {';
-            foreach ($this->options['tile_params'] as $key => $value) {
-                $ret .= " '".$key."': '".$value."',";
-            }
-            $ret .= '};';
-            $ret .= 'var c_g_Meetings_on_Map = "'.$this->hsc($translate['Meetings_on_Map']).'";';
-            $ret .= '</script>';
-            $ret .= '<style type="text/css">.onoffswitch-inner:before {
+            $ret = '<style type="text/css">.onoffswitch-inner:before {
     content: "'.$translate["Next_24_hours"].'";
     padding-left: 10px;
     background-color: #2d5c88; color: #FFFFFF;
@@ -677,7 +689,7 @@ if (!class_exists("BMLTMeetingMap")) {
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
             return plugin_dir_url(__FILE__);
         }
-        public function getAllMeetings($root_server, $query_string)
+        public function getURL($root_server, $query_string)
         {
             if (isset($query_string) && $query_string != '') {
                 $query_string = str_replace("()", "[]", $query_string);
@@ -685,25 +697,7 @@ if (!class_exists("BMLTMeetingMap")) {
             } else {
                 $query_string = '';
             }
-            $results = $this->get("$root_server/client_interface/json/?switcher=GetSearchResults$query_string&sort_key=time");
-            $httpcode = wp_remote_retrieve_response_code($results);
-            $response_message = wp_remote_retrieve_response_message($results);
-            if ($httpcode != 200 && $httpcode != 302 && $httpcode != 304 && !empty($response_message)) {
-                return 'Problem Connecting to Server!';
-            }
-            $body = wp_remote_retrieve_body($results);
-            return $body;
-        }
-        public function getAllFormats($root_server, $lang_enum)
-        {
-            $results = $this->get("$root_server/client_interface/json/?switcher=GetFormats&lang_enum=$lang_enum");
-            $httpcode = wp_remote_retrieve_response_code($results);
-            $response_message = wp_remote_retrieve_response_message($results);
-            if ($httpcode != 200 && $httpcode != 302 && $httpcode != 304 && !empty($response_message)) {
-                return 'Problem Connecting to Server!';
-            }
-            $body = wp_remote_retrieve_body($results);
-            return $body;
+            return "$root_server/client_interface/jsonp/?switcher=GetSearchResults$query_string&sort_key=time&get_used_formats";
         }
         public function get($url, $cookies = null)
         {

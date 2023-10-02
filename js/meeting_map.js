@@ -1,4 +1,4 @@
-function MeetingMap(in_div, in_coords, in_meeting_detail) {
+function MeetingMap(in_config, in_div, in_coords, in_meeting_detail) {
 	/****************************************************************************************
 	 *										CLASS VARIABLES									*
 	 ****************************************************************************************/
@@ -8,17 +8,21 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 	var g_filterWeekday = null;
 	var g_filterNotHaving = null;
 
-	var g_delegate = new MapDelegate();
+	var g_delegate = new MapDelegate(in_config);
+	const config = in_config;
 
 	var g_response_object = null;
 	var g_format_hash = null;
+	var g_crouton_filter = null;
 
 	/************************************************************************************//**
 	 *	\brief Load the map and set it up.													*
 	 ****************************************************************************************/
 
 	function load_map(in_div, in_location_coords) {
+		if (in_location_coords == null) in_location_coords = in_coords;
 		if (in_div) {
+			g_in_div = in_div;
 			in_div.myThrobber = null;
 
 			if (g_delegate.createMap(in_div, in_location_coords)) {
@@ -38,7 +42,18 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 			};
 		};
 	};
-
+	function loadFromCrouton(in_div, meetings_response_object, formats_response_object) {
+		load_map(in_div, in_coords);
+		meetings_response_object = meetings_response_object.filter(m => m.venue_type != venueType.VIRTUAL);
+		loadAllMeetings(meetings_response_object, formats_response_object, 0, '', true);
+		const lat_lngs = meetings_response_object.reduce(function(a,m) {a.push([m.latitude, m.longitude]); return a;},[]);
+		g_delegate.fitBounds(lat_lngs);
+	};
+	function filterFromCrouton(filter) {
+		g_crouton_filter = filter;
+		if (g_response_object)
+			search_response_callback(true);
+	};
 	/************************************************************************************//**
 	 *	\brief 
 	 ****************************************************************************************/
@@ -54,7 +69,7 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 				var img = document.createElement("img");
 
 				if (img) {
-					img.src = c_g_BMLTPlugin_throbber_img_src;
+					img.src = config.BMLTPlugin_throbber_img_src;
 					img.className = 'bmlt_map_throbber_img';
 					img.id = in_div.id + '_throbber_img';
 					img.alt = 'AJAX Throbber';
@@ -75,7 +90,7 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 			g_in_div.myThrobber.style.display = 'none';
 		};
 	};
-	function loadAllMeetings(meetings_response_object, formats_response_object, centerMe, goto) {
+	function loadAllMeetings(meetings_response_object, formats_response_object, centerMe, goto, fitAll=false) {
 		g_response_object = meetings_response_object;
 		if (in_meeting_detail) {
 			if (g_response_object.length > 0) {
@@ -96,7 +111,7 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 						showSearchDialog(null);
 					}
 				);
-			} else {
+			} else if (fitAll) {
 				showSearchDialog(null);
 			}
 		} else if (goto != '') {
@@ -131,32 +146,37 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 		});
 		return ret;
 	}
-	function search_response_callback() {
+	function search_response_callback(expand = false) {
 		if (!g_response_object.length) {
 			alert(g_no_meetings_found);
 			return;
 		};
 		try {
-			draw_markers();
+			draw_markers(expand);
 		} catch (e) {
 			g_delegate.addListener('projection_changed', function (ev) {
-				draw_markers();
+				draw_markers(expand);
 			}, true);
 		}
 	};
 	/****************************************************************************************
 	 *									CREATING MARKERS									*
 	 ****************************************************************************************/
-	function draw_markers() {
+	function draw_markers(expand = false) {
 		g_delegate.clearAllMarkers();
 
 		// This calculates which markers are the red "multi" markers.
-		var overlap_map = mapOverlappingMarkersInCity(filterMeetings(g_response_object));
+		const filtered = filterMeetings(g_response_object);
+		var overlap_map = mapOverlappingMarkersInCity(filtered);
 
 		// Draw the meeting markers.
 		overlap_map.forEach(function (marker) {
 			createMapMarker(marker);
 		});
+		if (expand) {
+			const lat_lngs = filtered.reduce(function(a,m) {a.push([m.latitude, m.longitude]); return a;},[]);
+			g_delegate.fitBounds(lat_lngs);
+		}
 	};
 
 	function mapOverlappingMarkersInCity(in_meeting_array)	///< Used to draw the markers when done.
@@ -220,11 +240,11 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 		var weekday_score_a = parseInt(mtg_a.weekday_tinyint, 10);
 		var weekday_score_b = parseInt(mtg_b.weekday_tinyint, 10);
 
-		if (weekday_score_a < g_start_week) {
+		if (weekday_score_a < config.start_week) {
 			weekday_score_a += 7;
 		}
 
-		if (weekday_score_b < g_start_week) {
+		if (weekday_score_b < config.start_week) {
 			weekday_score_b += 7;
 		}
 
@@ -285,11 +305,11 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 			marker_html, marker_title);
 	};
 	function getDayAndTime(in_meeting_obj) {
-		return c_g_weekdays[in_meeting_obj.weekday_tinyint] + " " + formattedTime(in_meeting_obj.start_time);
+		return config.weekdays[in_meeting_obj.weekday_tinyint] + " " + formattedTime(in_meeting_obj.start_time);
 	}
 	function formattedTime(in_time) {
 		var time = in_time.toString().split(':');
-		if (c_g_time_format == '12') {
+		if (config.time_format == '12') {
 			var h = time[0] % 12 || 12;
 			var ampm = (time[0] < 12 || time[0] === 24) ? "AM" : "PM";
 			return h + ':' + time[1] + ampm;
@@ -304,19 +324,13 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 				theFormat = g_format_hash[myFormatKeys[i]];
 				if (typeof theFormat == 'undefined') continue;
 				if (theFormat.format_type_enum == 'LANG') {
-					var a = c_g_BMLTPlugin_images + '/../lang/' + theFormat.key_string + ".png";
+					var a = config.BMLTPlugin_images + '/../lang/' + theFormat.key_string + ".png";
 					ret += ' <img src="' + a + '">';
 				}
 			}
 		}
 		return ret;
-	};
-	/************************************************************************************//**
-	 *	\brief Return the HTML for a meeting marker info window.							*
-	 *																						*
-	 *	\returns the XHTML for the meeting marker.											*
-	 ****************************************************************************************/
-
+	}
 	function marker_make_meeting(in_meeting_obj, listView) {
 		var id = in_meeting_obj.id_bigint.toString();
 		var myFormatKeys = in_meeting_obj.formats.split(',');
@@ -374,7 +388,7 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 		ret += '<div class="marker_div_location_maplink"><a href="';
 		ret += 'https://www.google.com/maps/dir/?api=1&destination='
 			+ encodeURIComponent(in_meeting_obj.latitude.toString()) + ',' + encodeURIComponent(in_meeting_obj.longitude.toString());
-		ret += '" rel="external" target="_blank">' + c_g_map_link_text + '</a>';
+		ret += '" rel="external" target="_blank">' + config.map_link_text + '</a>';
 		ret += '</div>';
 
 		if (regFormats.length > 0) {
@@ -385,19 +399,19 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 			ret += '</div>';
 		};
 		if (covidFormats.length > 0 && !listView) {
-			ret += '<button class="hygene-button" onClick=\'exchange("' + address_id + '", "' + hygene_id + '")\'>' + c_g_hygene_button + '</button>';
+			ret += '<button class="hygene-button" onClick=\'exchange("' + address_id + '", "' + hygene_id + '")\'>' + config.hygene_button + '</button>';
 		}
 		ret += '</div>';
 		if (covidFormats.length > 0) {
 			ret += '<div id="' + hygene_id + '" class="'+hygene_class+'">';
-			ret += '<div class="bmlt-hygene-header">' + c_g_hygene_header + '</div>';
+			ret += '<div class="bmlt-hygene-header">' + config.hygene_header + '</div>';
 			ret += '<div class="bmlt-hygene-descr">';
 			covidFormats.forEach(function(format) {
 				ret += format['description_string'] + '; ';
 			});
 			ret += '</div>';
 			if (!listView)
-				ret += '<button class="hygene-button" onClick=\'exchange("' + hygene_id + '", "' + address_id + '")\'>' + c_g_hygene_back + '</button>';
+				ret += '<button class="hygene-button" onClick=\'exchange("' + hygene_id + '", "' + address_id + '")\'>' + config.hygene_back + '</button>';
 			ret += '</div>';
 		}
 		ret += '</div>';
@@ -427,7 +441,7 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 				g_delegate.callGeocoder(document.getElementById('goto-text').value, filterMeetingsAndBounds);
 			}
 		} else {
-			alert(c_g_address_lookup_fail);
+			alert(config.address_lookup_fail);
 		};
 		return true;
 	};
@@ -436,12 +450,12 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 
 		var firstChild = document.createElement('button');
 		firstChild.className = 'menu-button';
-		firstChild.title = c_g_menu_tooltip;
+		firstChild.title = config.menu_tooltip;
 		controlDiv.appendChild(firstChild);
 
 		var buttonImage = document.createElement('span');
 		buttonImage.className = 'menu-button-child';
-		buttonImage.style.backgroundImage = 'url(' + c_g_BMLTPlugin_images + '/menu-32.png)';
+		buttonImage.style.backgroundImage = 'url(' + config.BMLTPlugin_images + '/menu-32.png)';
 		firstChild.appendChild(buttonImage);
 		if (pixel_width > 310) {
 			buttonImage.className = 'menu-button-childSmall';
@@ -456,11 +470,11 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 		dropdownContent.className = "menu-dropdown"
 
 		var item = document.createElement('button');
-		item.innerHTML = c_g_menu_search;
+		item.innerHTML = config.menu_search;
 		item.addEventListener('click', showSearchDialog);
 		dropdownContent.appendChild(item);
 		item = document.createElement('button');
-		item.innerHTML = c_g_menu_nearMe;
+		item.innerHTML = config.menu_nearMe;
 		item.style.display = 'block';
 		item.addEventListener('click', function (e) {
 			if (navigator.geolocation) {
@@ -471,17 +485,17 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 		});
 		dropdownContent.appendChild(item);
 		item = document.createElement('button');
-		item.innerHTML = c_g_menu_filter;
+		item.innerHTML = config.menu_filter;
 		item.style.display = 'block';
 		item.addEventListener('click', showFilterDialog);
 		dropdownContent.appendChild(item);
 		item = document.createElement('button');
-		item.innerHTML = c_g_menu_list;
+		item.innerHTML = config.menu_list;
 		item.style.display = 'block';
 		item.addEventListener('click', showListView);
 		dropdownContent.appendChild(item);
 		item = document.createElement('button');
-		item.innerHTML = c_g_menu_fullscreen;
+		item.innerHTML = config.menu_fullscreen;
 		item.style.display = 'block';
 		var toggleItem = item;
 		item.addEventListener('click', function () {
@@ -570,7 +584,7 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 			for (var c = 1; c <= 7; c++) {
 				dayFormats.push({
 					'key_string': '' + c,
-					'name_string': c_g_weekdays[c]
+					'name_string': config.weekdays[c]
 				});
 			}
 			lang_element = fillSelect('language_filter', langFormats, g_filterHaving);
@@ -613,7 +627,7 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 					if (label != '') {
 						label += ',';
 					}
-					label += c_g_weekdays[day];
+					label += config.weekdays[day];
 				}
 				if (open_element.checked) {
 					g_filterHaving.push('O');
@@ -635,7 +649,7 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 				g_filterNotHaving = null;
 				g_filterWeekday = null;
 				if (g_filterWeekday != null || g_filterHaving != null || g_filterNotHaving != null) {
-					secondChild.style.backgroundImage = 'url(' + c_g_BMLTPlugin_images + '/filter-26-off.png)';
+					secondChild.style.backgroundImage = 'url(' + config.BMLTPlugin_images + '/filter-26-off.png)';
 					firstChild.style.width = '26px';
 					secondChild.style.width = '26px';
 					secondChild.innerHTML = '';
@@ -676,110 +690,35 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 		return filterMeetings(filterBounds(bounds));
 	}
 	function filterMeetings(in_meetings_array) {
-		/**** This is a solution specific to the german region */
-		var ret = filterOutOnline(in_meetings_array);
-		/***var ***/ ret = filterMeetings24(ret, g_next24hours);
-		ret = filterMeetingsFmts(ret, g_filterHaving);
-		ret = filterMeetingDay(ret, g_filterWeekday);
+		var ret = in_meetings_array.filter(m => m.venue_type != 2);
+		if (g_crouton_filter != null) {
+			return ret.filter((m) => g_crouton_filter.includes(m.id_bigint));
+		}
+		if (g_next24hours) {
+			var dayNow = date.getDay();
+			var hour = date.getHours();
+			var mins = date.getMinutes();
+			ret = ret.filter(m => isMeetingInTime(m, dayNow, hour, mins));
+		}
+		if (g_filterHaving != null && g_filterHaving.length > 0) {
+			ret = ret.filter(m => g_filterHaving.every(
+				f => addNativeLangToFmts(m.formats.split(','),f).includes(f)));
+		}
+		if (g_filterWeekday != null && g_filterWeekday.length > 0) {
+			ret = ret.filter(m => g_filterWeekday.includes(m.weekday_tinyint));
+		}
 		return ret;
 	}
-	function noLangs(fmts) {
+	function addNativeLangToFmts(fmts, lang) {
+		if (lang != 'de') return fmts;
 		for (i = 0; i < fmts.length; i++) {
 			theFormat = g_format_hash[fmts[i]];
 			if (typeof theFormat == 'undefined') continue;
 			if (typeof theFormat.format_type_enum == 'undefined') continue;
-			if (theFormat.format_type_enum == 'LANG') return false;
+			if (theFormat.format_type_enum == 'LANG') return fmts;
 		}
-		return true;
-	}
-	function filterMeetingsFmts(in_meetings_array, fmt) {
-		if (fmt != null && fmt.length > 0) {
-			var ret = new Array;
-			for (var c = 0; c < in_meetings_array.length; c++) {
-				var ok = true;
-				var keys = in_meetings_array[c].formats.split(',');
-				if (fmt.includes('de')) {
-					if (noLangs(keys)) {
-						keys.push('de');
-					}
-				}
-				for (var d = 0; d < fmt.length; d++) {
-					if (keys.includes(fmt[d]))
-						continue;
-					ok = false;
-					break;
-				}
-				if (ok) {
-					ret.push(in_meetings_array[c]);
-				}
-			};
-			return ret;
-		}
-		return in_meetings_array;
-	}
-	function filterMeetingDay(in_meetings_array, fmt) {
-		if (fmt != null && fmt.length > 0) {
-			var ret = new Array;
-			for (var c = 0; c < in_meetings_array.length; c++) {
-				if (fmt.includes(in_meetings_array[c]['weekday_tinyint'])) {
-					ret.push(in_meetings_array[c]);
-				}
-			};
-			return ret;
-		}
-		return in_meetings_array;
-	}
-	function filterOutOnline(in_meeting_array) {
-		ret = new Array;
-		for (var c = 0; c < in_meeting_array.length; c++) {
-			if (isClosed(in_meeting_array[c])) continue;
-			if (!isVirtual(in_meeting_array[c])) {
-				ret.push(in_meeting_array[c]);
-			} else if (isHybrid(in_meeting_array[c])) {
-				ret.push(in_meeting_array[c]);
-			}
-		};
-		return ret;
-	}
-	function isHybrid(mtg) {
-		var keys = mtg.formats.split(',');
-		if (keys.includes('dual')) {
-			return true;
-		}
-		if (keys.includes('HY')) {
-			return true;
-		}
-		return false;
-	}
-	function isClosed(mtg) {
-		var keys = mtg.formats.split(',');
-		if (keys.includes('VG')) {
-			return true;
-		}
-		return false;
-	}
-	function isVirtual(mtg) {
-		var keys = mtg.formats.split(',');
-		if (keys.includes('VM')) {
-			return true;
-		}
-		return false;
-	}
-	function filterMeetings24(in_meeting_array, next24) {
-		if (next24) {
-			var ret = new Array;
-			var date = new Date;
-			var dayNow = date.getDay();
-			var hour = date.getHours();
-			var mins = date.getMinutes();
-			for (var c = 0; c < in_meeting_array.length; c++) {
-				if (isMeetingInTime(in_meeting_array[c], dayNow, hour, mins)) {
-					ret.push(in_meeting_array[c]);
-				}
-			};
-			return ret;
-		}
-		return in_meeting_array;
+		fmts.push('de');
+		return fmts;
 	}
 	function isMeetingInTime(meeting, dayNow, hour, mins) {
 		var weekday = meeting.weekday_tinyint - 1;
@@ -861,7 +800,7 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 		return startTime + "&nbsp;-&nbsp;" + endTime;
 	}
 	function meetingDayAndTimes(meeting) {
-		return c_g_weekdays[meeting.weekday_tinyint] + ' ' + meetingTimes(meeting);
+		return config.weekdays[meeting.weekday_tinyint] + ' ' + meetingTimes(meeting);
 	}
 	function showListView() {
 		var meetings = filterMeetings(filterVisible());
@@ -872,13 +811,13 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 		});
 		var listElement = document.getElementById("modal-view-by-weekday");
 		meetings.sort(sortMeetingSearchResponseCallback);
-		document.getElementById('modal-title').innerHTML = meetings.length + ' ' + c_g_Meetings_on_Map;
+		document.getElementById('modal-title').innerHTML = meetings.length + ' ' + config.Meetings_on_Map;
 		var html = '<table class="bmlt-table table table-striped table-hover table-bordered">';
 		var section = '';
 		meetings.forEach(function (meeting) {
 			if (meeting.weekday_tinyint != section) {
 				section = meeting.weekday_tinyint;
-				html += '<tr class="meeting-header"><td>' + c_g_weekdays[section] + '</td></tr>';
+				html += '<tr class="meeting-header"><td>' + config.weekdays[section] + '</td></tr>';
 			}
 			html += '<tr><td><div class="modal_times">' + meetingTimes(meeting) + '</div>';
 			html += marker_make_meeting(meeting,true) + '</td></tr>';
@@ -970,6 +909,28 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 			}
 		}
 	}
+	function getMeetings(url, centerMe, goto, useCrouton=true) {
+		if (useCrouton) {
+			document.addEventListener('meetingsLoaded', (e)=>{
+				loadAllMeetings(e.detail.meetingData, e.detail.formatData, centerMe, goto, fitAll=false);
+			});
+			return;
+		}
+		var promises = [fetchJsonp(url).then(function(response) { return response.json(); })];
+
+		return Promise.all(promises)
+			.then(function(data) {
+				var mainMeetings = data[0];
+				var jsonMeetings = JSON.stringify(mainMeetings['meetings']);
+				if (jsonMeetings === "{}" || jsonMeetings === "[]") {
+					var fullUrl = self.config['root_server'] + url
+					console.log("Could not find any meetings for the criteria specified with the query <a href=\"" + fullUrl + "\" target=_blank>" + fullUrl + "</a>");
+					//jQuery('#' + self.config['placeholder_id']).html("No meetings found.");
+					return;
+				}
+				loadAllMeetings(mainMeetings['meetings'], mainMeetings['formats'], centerMe, goto, fitAll=false);
+			});
+	};
 	var _isPseudoFullscreen = false;
 	function _setFullscreen(fullscreen) {
 		_isPseudoFullscreen = fullscreen;
@@ -981,17 +942,26 @@ function MeetingMap(in_div, in_coords, in_meeting_detail) {
 		}
 		g_delegate.invalidateSize();
 	}
+	function invalidateSize() {
+		g_delegate.invalidateSize();
+	}
 	/****************************************************************************************
 	 *								MAIN FUNCTIONAL INTERFACE								*
 	 ****************************************************************************************/
 	if (in_div && in_coords) {
 		if (!in_meeting_detail) load_map(in_div, in_coords);
-		this.loadAllMeetingsExt = loadAllMeetings;
+		this.getMeetingsExt = getMeetings;
 		this.openTableViewExt = openTableView;
 	};
+	this.loadMapExt = loadFromCrouton;
+	this.showMapExt = invalidateSize;
+	this.filterFromCrouton = filterFromCrouton;
 };
-MeetingMap.prototype.loadAllMeetingsExt = null;
+MeetingMap.prototype.getMeetingsExt = null;
 MeetingMap.prototype.openTableViewExt = null;
+MeetingMap.prototype.loadMapExt = null;
+MeetingMap.prototype.showMapExt = null;
+MeetingMap.prototype.filterFromCrouton = null;
 function exchange(id1, id2) {
 	var el = document.getElementById(id1);
 	el.classList.remove("active");
