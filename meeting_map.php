@@ -29,7 +29,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 // Front end
                 add_action("wp_enqueue_scripts", array(&$this, "enqueue_frontend_files_if_needed"));
                 add_action("crouton_map_enqueue_scripts", array(&$this, "enqueue_frontend_files"), 0);
-                add_filter("crouton_map_create_control", array(&$this, "create_meeting_map"), 10, 2);
+                add_filter("crouton_map_create_control", array(&$this, "create_meeting_map"), 10, 3);
                 add_shortcode('bmlt_meeting_map', array(
                     &$this,
                     "meeting_map"
@@ -474,14 +474,13 @@ if (!class_exists("BMLTMeetingMap")) {
             return;
         }
         // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-        public function create_meeting_map($ret, $lang)
+        public function create_meeting_map($ret, $lang, $control)
         {
             include(dirname(__FILE__)."/lang/translate_".$lang.".php");
-            $this->options['useCrouton'] = true;
             $lat = $this->options['lat'];
             $lng = $this->options['lng'];
             $zoom = $this->options['zoom'];
-            $ret .= "c_mm = new MeetingMap( ".$this->createJavascriptConfig($translate, $this->options).", null,";
+            $ret .= "$control = new MeetingMap( ".$this->createJavascriptConfig($translate, $this->options).", null,";
             $ret .= "{'latitude':$lat,'longitude':$lng,'zoom':$zoom},true);";
             return $ret;
         }
@@ -549,7 +548,7 @@ if (!class_exists("BMLTMeetingMap")) {
             </div>
             <div id="filter_modal" class="modal">
             <div class="modal-content">
-                <span class="modal-title">'.$translate['Filter_Header'].'</span><span id="close_filter" class="modal-close">&times;</span>
+                <span class="modal-title"><?php echo $translate['Filter_Header'];?>'</span><span id="close_filter" class="modal-close">&times;</span>
                 <p>
                 <?php echo $translate['By_Language']?><br>
                 <span class="custom-dropdown">

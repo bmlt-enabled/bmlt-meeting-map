@@ -909,13 +909,7 @@ function MeetingMap(in_config, in_div, in_coords, in_meeting_detail) {
 			}
 		}
 	}
-	function getMeetings(url, centerMe, goto, useCrouton=true) {
-		if (useCrouton) {
-			document.addEventListener('meetingsLoaded', (e)=>{
-				loadAllMeetings(e.detail.meetingData, e.detail.formatData, centerMe, goto, fitAll=false);
-			});
-			return;
-		}
+	function getMeetings(url, centerMe, goto) {
 		var promises = [fetchJsonp(url).then(function(response) { return response.json(); })];
 
 		return Promise.all(promises)
