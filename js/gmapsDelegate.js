@@ -61,7 +61,7 @@
             g_main_map.fitBounds(bounds);
         }
         function setViewToPosition(position, filterMeetings) {
-            var latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+            var latlng = new google.maps.LatLng(position.latitude, position.longitude);
             g_main_map.setCenter(latlng);
             g_main_map.setZoom(getZoomAdjust(false, filterMeetings));
         }
@@ -121,7 +121,8 @@
             } 
             return ret;
         }
-        function setZoom(filterMeetings) {
+        function setZoom(filterMeetings, force=0) {
+            (force > 0) ? g_main_map.setZoom(force) : 
             g_main_map.setZoom(getZoomAdjust(false,filterMeetings));
         }
         function zoomOut(filterMeetings) {

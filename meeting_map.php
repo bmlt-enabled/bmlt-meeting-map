@@ -480,7 +480,7 @@ if (!class_exists("BMLTMeetingMap")) {
             $lat = $this->options['lat'];
             $lng = $this->options['lng'];
             $zoom = $this->options['zoom'];
-            $ret .= "$control = new MeetingMap( ".$this->createJavascriptConfig($translate, $this->options).", null,";
+            $ret = "$control = new MeetingMap( ".$this->createJavascriptConfig($translate, $this->options).", null,";
             $ret .= "{'latitude':$lat,'longitude':$lng,'zoom':$zoom},true);";
             return $ret;
         }

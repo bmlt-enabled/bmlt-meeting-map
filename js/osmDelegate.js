@@ -74,7 +74,7 @@ function MapDelegate(in_config) {
 		}
     }
     function setViewToPosition(position, filterMeetings) {
-        var latlng = L.latLng(position.coords.latitude, position.coords.longitude);
+        var latlng = L.latLng(position.latitude, position.longitude);
 		g_main_map.flyTo(latlng);
         g_main_map.on('moveend', function(ev) {
 			g_main_map.off('moveend');
@@ -137,8 +137,8 @@ function MapDelegate(in_config) {
 		} 
 		return ret;
 	}
-    function setZoom(filterMeetings) {
-        g_main_map.setZoom(getZoomAdjust(false,filterMeetings));
+    function setZoom(filterMeetings, force=0) {
+		(force > 0) ? g_main_map.setZoom(force) : g_main_map.setZoom(getZoomAdjust(false,filterMeetings));
 	}
 	function zoomOut(filterMeetings) {
         g_main_map.setZoom(getZoomAdjust(true,filterMeetings));

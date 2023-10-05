@@ -19,8 +19,12 @@ function MeetingMap(in_config, in_div, in_coords, in_meeting_detail) {
 	 *	\brief Load the map and set it up.													*
 	 ****************************************************************************************/
 
-	function load_map(in_div, in_location_coords) {
-		if (in_location_coords == null) in_location_coords = in_coords;
+	function load_map(in_div, in_location_coords, handlebarMapOptions=null) {
+		if (handlebarMapOptions) {
+			in_location_coords = {latitude: handlebarMapOptions.lat, longitude: handlebarMapOptions.lng};
+		} else if (in_location_coords == null) {
+			in_location_coords = in_coords;
+		}
 		if (in_div) {
 			g_in_div = in_div;
 			in_div.myThrobber = null;
@@ -42,12 +46,15 @@ function MeetingMap(in_config, in_div, in_coords, in_meeting_detail) {
 			};
 		};
 	};
-	function loadFromCrouton(in_div, meetings_response_object, formats_response_object) {
-		load_map(in_div, in_coords);
+	function loadFromCrouton(in_div_id, meetings_response_object, formats_response_object, handlebarMapOptions = null) {
+		in_div = document.getElementById(in_div_id);
+		load_map(in_div, in_coords, handlebarMapOptions);
 		meetings_response_object = meetings_response_object.filter(m => m.venue_type != venueType.VIRTUAL);
 		loadAllMeetings(meetings_response_object, formats_response_object, 0, '', true);
-		const lat_lngs = meetings_response_object.reduce(function(a,m) {a.push([m.latitude, m.longitude]); return a;},[]);
-		g_delegate.fitBounds(lat_lngs);
+		if (handlebarMapOptions) {
+			const lat_lngs = meetings_response_object.reduce(function(a,m) {a.push([m.latitude, m.longitude]); return a;},[]);
+			g_delegate.fitBounds(lat_lngs);
+		}
 	};
 	function filterFromCrouton(filter) {
 		g_crouton_filter = filter;
@@ -92,20 +99,14 @@ function MeetingMap(in_config, in_div, in_coords, in_meeting_detail) {
 	};
 	function loadAllMeetings(meetings_response_object, formats_response_object, centerMe, goto, fitAll=false) {
 		g_response_object = meetings_response_object;
-		if (in_meeting_detail) {
-			if (g_response_object.length > 0) {
-				in_coords.latitude = g_response_object[0].latitude;
-				in_coords.longitude = g_response_object[0].longitude;
-			}
-			load_map(in_div, in_coords);
-		}
 		g_format_hash = create_format_hash(formats_response_object);
 		search_response_callback();
 		if (centerMe != 0) {
 			if (navigator.geolocation) {
 				navigator.geolocation.getCurrentPosition(
 					function (position) {
-						g_delegate.setViewToPosition(position, filterMeetingsAndBounds);
+						coords = {latitude: position.coords.latitude, longitude: position.coords.longitude};
+						g_delegate.setViewToPosition(coords, filterMeetingsAndBounds);
 					},
 					function () {
 						showSearchDialog(null);
@@ -922,6 +923,13 @@ function MeetingMap(in_config, in_div, in_coords, in_meeting_detail) {
 					//jQuery('#' + self.config['placeholder_id']).html("No meetings found.");
 					return;
 				}
+				if (in_meeting_detail) {
+					if (mainMeetings['meetings'].length > 0) { 
+						in_coords.latitude = mainMeetings['meetings'][0].latitude;
+						in_coords.longitude = mainMeetings['meetings'][0].longitude;
+					}
+					load_map(in_div, in_coords);
+				}
 				loadAllMeetings(mainMeetings['meetings'], mainMeetings['formats'], centerMe, goto, fitAll=false);
 			});
 	};
@@ -947,15 +955,15 @@ function MeetingMap(in_config, in_div, in_coords, in_meeting_detail) {
 		this.getMeetingsExt = getMeetings;
 		this.openTableViewExt = openTableView;
 	};
-	this.loadMapExt = loadFromCrouton;
-	this.showMapExt = invalidateSize;
-	this.filterFromCrouton = filterFromCrouton;
+	this.initialize = loadFromCrouton;
+	this.showMap = invalidateSize;
+	this.fillMap = filterFromCrouton;
 };
 MeetingMap.prototype.getMeetingsExt = null;
 MeetingMap.prototype.openTableViewExt = null;
-MeetingMap.prototype.loadMapExt = null;
-MeetingMap.prototype.showMapExt = null;
-MeetingMap.prototype.filterFromCrouton = null;
+MeetingMap.prototype.initialize = null;
+MeetingMap.prototype.showMap = null;
+MeetingMap.prototype.fillMap = null;
 function exchange(id1, id2) {
 	var el = document.getElementById(id1);
 	el.classList.remove("active");
