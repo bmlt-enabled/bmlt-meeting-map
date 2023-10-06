@@ -73,16 +73,27 @@ function MapDelegate(in_config) {
 			g_main_map.on(ev, f);
 		}
     }
-    function setViewToPosition(position, filterMeetings) {
+    function setViewToPosition(position, filterMeetings, extra=null) {
         var latlng = L.latLng(position.latitude, position.longitude);
 		g_main_map.flyTo(latlng);
         g_main_map.on('moveend', function(ev) {
 			g_main_map.off('moveend');
-			g_main_map.setZoom(getZoomAdjust(false, filterMeetings));
-			g_main_map.on('moveend',function() {
-				g_main_map.invalidateSize();
-			});
-        });
+			newZoom = getZoomAdjust(false, filterMeetings);
+			if (g_main_map.getZoom() != newZoom) {
+				g_main_map.setZoom(newZoom);
+				g_main_map.on('zoomend',function() {
+					g_main_map.off('zoomend'); 
+					g_main_map.invalidateSize();
+					if (extra) {
+						g_main_map.on('load moveend', extra);
+					}
+				});
+			} else {
+				if (extra) {
+					extra();
+				}
+			}
+		});
 	}
 	function clearAllMarkers ( )
 	{
@@ -91,7 +102,7 @@ function MapDelegate(in_config) {
 
 			for ( var c = 0; c < g_allMarkers.length; c++ )
 			{
-				g_allMarkers[c].remove( );
+				g_allMarkers[c].marker.remove( );
 				g_allMarkers[c] = null;
 			};
 
@@ -149,7 +160,8 @@ function MapDelegate(in_config) {
 	function createMarker (	in_coords,		///< The long/lat for the marker.
         multi,	///< The URI for the main icon
         in_html,		///< The info window HTML
-        in_title        ///< The tooltip
+        in_title,        ///< The tooltip
+		in_ids
 )
 {
     var in_main_icon = (multi ? g_icon_image_multi : g_icon_image_single);
@@ -165,8 +177,12 @@ function MapDelegate(in_config) {
     marker.on('popupclose', function(e) {
         marker.setIcon(marker.oldIcon);
     });
-    g_allMarkers[g_allMarkers.length] = marker;
+    g_allMarkers[g_allMarkers.length] = {ids: in_ids, marker: marker};
 };
+function openMarker(id) {
+	marker = g_allMarkers.find((m) => m.ids.includes(id));
+	if (marker) marker.marker.openPopup();
+}
 function addControl(div,pos) {
 		var ControlClass =  L.Control.extend({
 	  		onAdd: function (map) {
@@ -311,6 +327,7 @@ function addControl(div,pos) {
 	this.invalidateSize = invalidateSize;
 	this.zoomOut = zoomOut;
 	this.fitBounds = fitBounds;
+	this.openMarker = openMarker;
 }
 MapDelegate.prototype.createMap = null;
 MapDelegate.prototype.addListener = null;
@@ -326,3 +343,4 @@ MapDelegate.prototype.getBounds = null;
 MapDelegate.prototype.invalidateSize = null;
 MapDelegate.prototype.zoomOut = null;
 MapDelegate.prototype.fitBounds = null;
+MapDelegate.prototype.openMarker = null;

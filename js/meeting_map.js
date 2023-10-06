@@ -303,7 +303,7 @@ function MeetingMap(in_config, in_div, in_coords, in_meeting_detail) {
 		marker_html += '</div>';
 		g_delegate.createMarker(main_point,
 			(in_mtg_obj_array.length > 1),
-			marker_html, marker_title);
+			marker_html, marker_title,in_mtg_obj_array.map((m)=>parseInt(m.id_bigint)));
 	};
 	function getDayAndTime(in_meeting_obj) {
 		return config.weekdays[in_meeting_obj.weekday_tinyint] + " " + formattedTime(in_meeting_obj.start_time);
@@ -480,7 +480,8 @@ function MeetingMap(in_config, in_div, in_coords, in_meeting_detail) {
 		item.addEventListener('click', function (e) {
 			if (navigator.geolocation) {
 				navigator.geolocation.getCurrentPosition(function (position) {
-					g_delegate.setViewToPosition(position, filterMeetingsAndBounds);
+					coords = position.coords;
+					g_delegate.setViewToPosition(coords, filterMeetingsAndBounds);
 				});
 			}
 		});
@@ -512,6 +513,13 @@ function MeetingMap(in_config, in_div, in_coords, in_meeting_detail) {
 		});
 		firstChild.appendChild(dropdownContent);
 		return controlDiv;
+	}
+	function focusOnMeeting(meetingId) {
+		meeting = g_response_object.find((meeting) => meeting.id_bigint == meetingId);
+		if (!meeting) return;
+		coords = {latitude: meeting.latitude, longitude: meeting.longitude};
+		g_delegate.setViewToPosition(coords, filterMeetingsAndBounds, function() {g_delegate.openMarker(meetingId);});
+		
 	}
 	var g_suspendedFullscreen = false;
 	function closeModalWindow(modal) {
@@ -958,12 +966,14 @@ function MeetingMap(in_config, in_div, in_coords, in_meeting_detail) {
 	this.initialize = loadFromCrouton;
 	this.showMap = invalidateSize;
 	this.fillMap = filterFromCrouton;
+	this.rowClick = focusOnMeeting;
 };
 MeetingMap.prototype.getMeetingsExt = null;
 MeetingMap.prototype.openTableViewExt = null;
 MeetingMap.prototype.initialize = null;
 MeetingMap.prototype.showMap = null;
 MeetingMap.prototype.fillMap = null;
+MeetingMap.prototype.rowClick = null;
 function exchange(id1, id2) {
 	var el = document.getElementById(id1);
 	el.classList.remove("active");

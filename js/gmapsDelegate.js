@@ -72,11 +72,10 @@
     
                 for ( var c = 0; c < g_allMarkers.length; c++ )
                 {
-                    if ( g_allMarkers[c] && g_allMarkers[c].info_win ) {
-                        g_allMarkers[c].info_win_.close();
-                        g_allMarkers[c] = null;
+                    if ( g_allMarkers[c] && g_allMarkers[c].marker.info_win ) {
+                        g_allMarkers[c].marker.info_win_.close();
                     };
-                    g_allMarkers[c].setMap( null );
+                    g_allMarkers[c].marker.setMap( null );
                     g_allMarkers[c] = null;
                 };
     
@@ -146,7 +145,8 @@
     function createMarker (	in_coords,		///< The long/lat for the marker.
 			multi, 
 			in_html,		///< The info window HTML
-			in_title        ///< The tooltip
+			in_title,        ///< The tooltip
+            in_ids
 	)
 	{
         var in_main_icon = (multi ? g_icon_image_multi : g_icon_image_single)
@@ -207,72 +207,7 @@
 				marker.info_win_.open();
 			}
 		});
-		g_allMarkers[g_allMarkers.length] = marker;
-    };
-    function createMarker (	coords,		///< The long/lat for the marker.
-        multi,	///< The URI for the main icon
-        in_html,		///< The info window HTML
-        in_title        ///< The tooltip
-    ) {
-    var marker = null;
-
-    var	is_clickable = (in_html ? true : false);
-    var in_main_icon = (multi ? g_icon_image_multi : g_icon_image_single)
-    var in_coords = new google.maps.LatLng(coords[0], coords[1]);
-    var marker = new google.maps.Marker ( { 'position':		in_coords,
-            'map':			g_main_map,
-            'shadow':		g_icon_shadow,
-            'icon':			in_main_icon,
-            'shape':		g_icon_shape,
-            'clickable':	is_clickable,
-            'cursor':		'default',
-            'title':        in_title,
-            'draggable':    false
-    } );
-
-    marker.old_image = marker.getIcon();
-
-    google.maps.event.addListener ( marker, "click", function () {
-        // for some reason, closeWhenOthersOpen doesn't work on Chrome....
-        g_allMarkers.forEach(function(marker)
-        {
-            if ( marker != this )
-            {
-                if ( marker.info_win_)
-                {
-                    marker.info_win_.close();
-                };
-            };
-        });
-        if ( !marker.info_win_ )
-        {
-            if(marker.old_image){marker.setIcon(g_icon_image_selected)};
-            marker.setZIndex(google.maps.Marker.MAX_ZINDEX+1);
-            marker.info_win_ = new SnazzyInfoWindow({
-                     marker: marker,
-                    content: in_html,
-                    showCloseButton: false,
-                    closeWhenOthersOpen: true,
-                    callbacks: {
-                        afterClose: function(){
-                                    if(marker.old_image){
-                                        marker.setIcon(marker.old_image);
-                                    };
-                                    marker.setZIndex(null);
-                                    //setTimeout(function(){ this.close(); }, 1000);
-                        }
-                    },
-                    edgeOffset: {
-                                  top: 50,
-                                  right: 5,
-                                  bottom: 20,
-                                  left: 5
-                                }
-            });
-            marker.info_win_.open();
-        }
-    });
-    g_allMarkers[g_allMarkers.length] = marker;
+		g_allMarkers[g_allMarkers.length] = {ids: in_ids, marker: marker};
     };
     function addControl(div,pos) {
         var p = pos;
@@ -293,6 +228,9 @@
     function fitAndZoom(ev) {
         g_main_map.fitBounds(this.response[0].geometry.viewport);
         g_main_map.setZoom(getZoomAdjust(true,this.filterMeetings));
+    }
+    function openMarker(id) {
+        console.log("no yet implemented");
     }
     function geoCallback( in_geocode_response ) {
         var callback = fitAndZoom.bind({filterMeetings:this.filterMeetings,
@@ -365,6 +303,7 @@
         this.invalidateSize = invalidateSize;
         this.zoomOut = zoomOut;
         this.fitBounds = fitBounds;
+        this.openMarker = openMarker;
     }
     MapDelegate.prototype.createMap = null;
     MapDelegate.prototype.addListener = null;
