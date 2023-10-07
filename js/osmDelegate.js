@@ -166,22 +166,38 @@ function MapDelegate(in_config) {
 {
     var in_main_icon = (multi ? g_icon_image_multi : g_icon_image_single);
 
+	let highlightRow = function(target) {
+		let id = target.id.split('-')[1];
+		jQuery(".bmlt-data-row > td").removeClass("rowHighlight");
+		jQuery("#meeting-data-row-" + id + " > td").addClass("rowHighlight");
+		crouton && crouton.dayTabFromId(id);
+	}
     var marker = L.marker(in_coords, {icon: in_main_icon, title: in_title}).bindPopup(in_html).addTo(g_main_map);
 	marker.on('popupopen', function(e) {
         marker.oldIcon = marker.getIcon();
 		marker.setIcon(g_icon_image_selected);
 		g_main_map.on('zoomstart',function(){
 			marker.closePopup();
-		})
-    });
+		});
+		jQuery("input[type=radio][name=panel]:checked").each(function(index, target) {
+			highlightRow(target);
+    	});
+		jQuery('input[type=radio][name=panel]').change(function() {
+			highlightRow(this);
+        });
+	});
     marker.on('popupclose', function(e) {
         marker.setIcon(marker.oldIcon);
+		jQuery(".bmlt-data-row > td").removeClass("rowHighlight");
     });
     g_allMarkers[g_allMarkers.length] = {ids: in_ids, marker: marker};
-};
+}
 function openMarker(id) {
 	marker = g_allMarkers.find((m) => m.ids.includes(id));
-	if (marker) marker.marker.openPopup();
+	if (marker) {
+		 marker.marker.openPopup();
+		jQuery("#panel-"+id).prop('checked', true);
+	}
 }
 function addControl(div,pos) {
 		var ControlClass =  L.Control.extend({

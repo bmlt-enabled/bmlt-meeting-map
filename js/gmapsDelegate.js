@@ -230,7 +230,7 @@
         g_main_map.setZoom(getZoomAdjust(true,this.filterMeetings));
     }
     function openMarker(id) {
-        console.log("no yet implemented");
+        console.log("not yet implemented");
     }
     function geoCallback( in_geocode_response ) {
         var callback = fitAndZoom.bind({filterMeetings:this.filterMeetings,

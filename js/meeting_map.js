@@ -51,10 +51,8 @@ function MeetingMap(in_config, in_div, in_coords, in_meeting_detail) {
 		load_map(in_div, in_coords, handlebarMapOptions);
 		meetings_response_object = meetings_response_object.filter(m => m.venue_type != venueType.VIRTUAL);
 		loadAllMeetings(meetings_response_object, formats_response_object, 0, '', true);
-		if (handlebarMapOptions) {
-			const lat_lngs = meetings_response_object.reduce(function(a,m) {a.push([m.latitude, m.longitude]); return a;},[]);
-			g_delegate.fitBounds(lat_lngs);
-		}
+		const lat_lngs = meetings_response_object.reduce(function(a,m) {a.push([m.latitude, m.longitude]); return a;},[]);
+		g_delegate.fitBounds(lat_lngs);
 	};
 	function filterFromCrouton(filter) {
 		g_crouton_filter = filter;
@@ -289,14 +287,14 @@ function MeetingMap(in_config, in_div, in_coords, in_meeting_detail) {
 		var checked = ' checked';
 		var marker_title = '';
 		for (var c = 0; c < in_mtg_obj_array.length; c++) {
-			marker_html += '<div><input type="radio" name="panel" id="panel-' + c + '"' + checked + '>';
+			marker_html += '<div><input type="radio" name="panel" id="panel-' + in_mtg_obj_array[c].id_bigint + '"' + checked + '>';
 			if (c > 0) {
 				marker_title += '; ';
 			}
 			var dayAndTime = getDayAndTime(in_mtg_obj_array[c]);
 			marker_title += dayAndTime;
 			checked = '';
-			marker_html += '<label for="panel-' + c + '">' + dayAndTime + '</label>';
+			marker_html += '<label for="panel-' + in_mtg_obj_array[c].id_bigint + '">' + dayAndTime + '</label>';
 			marker_html += marker_make_meeting(in_mtg_obj_array[c],false);
 			marker_html += '</div>';
 		}
