@@ -143,19 +143,7 @@ if (!class_exists("BMLTMeetingMap")) {
         {
             wp_enqueue_script("fetch-jsonp", plugin_dir_url(__FILE__) . "js/fetch-jsonp.js", false, filemtime(plugin_dir_path(__FILE__) . "js/fetch-jsonp.js"), false);
             if ($this->options['tile_provider'] == 'google') {
-                $gKey = '';
-                if (isset($this->options['api_key']) && ('' != $this->options['api_key']) && ('INVALID' != $this->options['api_key'])) {
-                    $gKey = $this->options['api_key'];
-                }
-                $googleJs = $gKey;
-                if (!empty($this->options['region_bias'])) {
-                    $googleJs .= '&region='.strtoupper($this->options['region_bias']);
-                }
-
-                wp_enqueue_script('googlemaps', 'https://maps.googleapis.com/maps/api/js?libraries=geometry&key='.$googleJs, false, '3');
-                wp_enqueue_style("snazzy-info-window", plugin_dir_url(__FILE__) . "css/snazzy-info-window.min.css", false, filemtime(plugin_dir_path(__FILE__) . "css/snazzy-info-window.min.css"), false);
                 wp_enqueue_style("meeting_map", plugin_dir_url(__FILE__) . "css/meeting_map.css", false, filemtime(plugin_dir_path(__FILE__) . "css/meeting_map.css"), false);
-                wp_enqueue_script("snazzy-info-window", plugin_dir_url(__FILE__) . "js/snazzy-info-window.min.js", false, filemtime(plugin_dir_path(__FILE__) . "js/snazzy-info-window.min.js"), true);
                 wp_enqueue_script("gmapsDelegate", plugin_dir_url(__FILE__) . "js/gmapsDelegate.js", false, filemtime(plugin_dir_path(__FILE__) . "js/gmapsDelegate.js"), false);
                 wp_enqueue_script("meeting_map", plugin_dir_url(__FILE__) . "js/meeting_map.js", false, filemtime(plugin_dir_path(__FILE__) . "js/meeting_map.js"), false);
             } else {
@@ -542,7 +530,7 @@ if (!class_exists("BMLTMeetingMap")) {
             <div dir="ltr" class="bmlt_search_map_div" id="bmlt_search_map_div">
             <script type="text/javascript">
                 document.getElementById("bmlt_map_container").style.display='block';
-                c_mm = new MeetingMap( <?php echo $this->createJavascriptConfig($translate, $this->options)?>, document.getElementById('bmlt_search_map_div'), 
+                croutonMap = new MeetingMap( <?php echo $this->createJavascriptConfig($translate, $this->options)?>, document.getElementById('bmlt_search_map_div'), 
                     {'latitude':<?php echo $lat;?>,'longitude':<?php echo $lng;?>,'zoom':<?php echo $zoom;?>}<?php echo $meeting_details; ?>);
             </script>
             </div>
@@ -573,8 +561,8 @@ if (!class_exists("BMLTMeetingMap")) {
                   <div id="table_content" class="modal-content">
                     <span class="modal-title" id="modal-title"></span><span id="close_table" class="modal-close">&times;</span>
                     <div id="modal-tab">
-                      <button id="modal-day-button" class="modal-tablinks" onclick="c_mm.openTableViewExt(event, 'modal-view-by-weekday')"><?php echo $translate['By_Day']; ?></button>
-                      <button id="modal-city-button" class="modal-tablinks" onclick="c_mm.openTableViewExt(event, 'modal-view-by-city')"><?php echo $translate['By_City']; ?></button>
+                      <button id="modal-day-button" class="modal-tablinks" onclick="croutonMap.openTableViewExt(event, 'modal-view-by-weekday')"><?php echo $translate['By_Day']; ?></button>
+                      <button id="modal-city-button" class="modal-tablinks" onclick="croutonMap.openTableViewExt(event, 'modal-view-by-city')"><?php echo $translate['By_City']; ?></button>
                     </div>
                   <div id="modal-view-by-weekday" class="modal-tabcontent"></div>
                   <div id="modal-view-by-city" class="modal-tabcontent"></div>
@@ -603,7 +591,7 @@ if (!class_exists("BMLTMeetingMap")) {
                     }
                     flush();
                     $footer_content = '<div style="display:none;">';
-                    $footer_content .= '<script type="text/javascript">c_mm.getMeetingsExt(';
+                    $footer_content .= '<script type="text/javascript">croutonMap.getMeetingsExt(';
                     $footer_content .=  '"'.$this->getURL($root_server, $query_string).'",';
                     $footer_content .= $center_me.',"'.$goto.'");</script>';
                     $footer_content .= '</div>';

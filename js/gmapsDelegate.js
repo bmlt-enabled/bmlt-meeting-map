@@ -1,14 +1,34 @@
     function MapDelegate(in_config) {
         const config = in_config;
-        var g_icon_image_single = new google.maps.MarkerImage ( config.BMLTPlugin_images+"/NAMarker.png", new google.maps.Size(23, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
-	    var g_icon_image_multi = new google.maps.MarkerImage ( config.BMLTPlugin_images+"/NAMarkerG.png", new google.maps.Size(23, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
-	    var g_icon_image_selected = new google.maps.MarkerImage ( config.BMLTPlugin_images+"/NAMarkerSel.png", new google.maps.Size(23, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
-	    var g_icon_shadow = new google.maps.MarkerImage( config.BMLTPlugin_images+"/NAMarkerS.png", new google.maps.Size(43, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
-	    var g_icon_shape = { coord: [16,0,18,1,19,2,20,3,21,4,21,5,22,6,22,7,22,8,22,9,22,10,22,11,22,12,22,13,22,14,22,15,22,16,21,17,21,18,22,19,20,20,19,21,20,22,18,23,17,24,18,25,17,26,15,27,14,28,15,29,12,30,12,31,10,31,10,30,9,29,8,28,8,27,7,26,6,25,5,24,5,23,4,22,3,21,3,20,2,19,1,18,1,17,1,16,0,15,0,14,0,13,0,12,0,11,0,10,0,9,0,8,0,7,1,6,1,5,2,4,2,3,3,2,5,1,6,0,16,0], type: 'poly' };
+        var g_icon_image_single = null;
+	    var g_icon_image_multi = null;
+	    var g_icon_image_selected = null;
+	    var g_icon_shadow = null;
+	    var g_icon_shape = null;
         var g_main_map;
+        var g_infoWindow;
+        var g_isLoaded = false;
         var	g_allMarkers = [];				///< Holds all the markers.
-
+        function isApiLoaded() {
+            return g_isLoaded;
+        }
+        function loadApi(f, args) {
+            var tag = document.createElement('script');
+            g_isLoaded = true;
+            if (typeof config['api_key'] === 'undefined') config['api_key'] = "";
+            tag.src = "https://maps.googleapis.com/maps/api/js?key=" + config['api_key'] + "&callback=croutonMap.apiLoadedCallback";
+            tag.defer = true;
+            tag.async = true;
+            var firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        };
         function createMap(in_div, in_location_coords) {
+        g_icon_image_single = new google.maps.MarkerImage ( config.BMLTPlugin_images+"/NAMarker.png", new google.maps.Size(23, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
+	    g_icon_image_multi = new google.maps.MarkerImage ( config.BMLTPlugin_images+"/NAMarkerG.png", new google.maps.Size(23, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
+	    g_icon_image_selected = new google.maps.MarkerImage ( config.BMLTPlugin_images+"/NAMarkerSel.png", new google.maps.Size(23, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
+	    g_icon_shadow = new google.maps.MarkerImage( config.BMLTPlugin_images+"/NAMarkerS.png", new google.maps.Size(43, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
+	    g_icon_shape = { coord: [16,0,18,1,19,2,20,3,21,4,21,5,22,6,22,7,22,8,22,9,22,10,22,11,22,12,22,13,22,14,22,15,22,16,21,17,21,18,22,19,20,20,19,21,20,22,18,23,17,24,18,25,17,26,15,27,14,28,15,29,12,30,12,31,10,31,10,30,9,29,8,28,8,27,7,26,6,25,5,24,5,23,4,22,3,21,3,20,2,19,1,18,1,17,1,16,0,15,0,14,0,13,0,12,0,11,0,10,0,9,0,8,0,7,1,6,1,5,2,4,2,3,3,2,5,1,6,0,16,0], type: 'poly' };
+
             if (! in_location_coords ) return null;
             var myOptions = {
                 'mapTypeId': google.maps.MapTypeId.ROADMAP,
@@ -31,10 +51,12 @@
             var	pixel_height = in_div.offsetHeight;
             
             if ( (pixel_width < 640) || (pixel_height < 640) ) {
-                myOptions.scrollwheel = true;                    myOptions.zoomControlOptions = { 'style': google.maps.ZoomControlStyle.SMALL };
+                myOptions.scrollwheel = true;                    
+                myOptions.zoomControlOptions = { 'style': google.maps.ZoomControlStyle.SMALL };
             } else {
                 myOptions.zoomControlOptions = { 'style': google.maps.ZoomControlStyle.LARGE };
             };
+            g_infoWindow = new google.maps.InfoWindow();
             g_main_map = new google.maps.Map ( in_div, myOptions );
             return g_main_map;
         }
@@ -53,8 +75,8 @@
                 google.maps.event.addListener( g_main_map, e, f);
             }
         }
-        function fitBounds(lat_lng) {
-            const bounds = filteredMeetings.reduce(
+        function fitBounds(locations) {
+            const bounds = locations.reduce(
                 function (bounds, m) {
                     return bounds.extend(new google.maps.LatLng(m[0], m[1]));
                 }, new google.maps.LatLngBounds());
@@ -154,9 +176,10 @@
 
 		var	is_clickable = (in_html ? true : false);
 
-		var marker = new google.maps.Marker ( { 'position':		in_coords,
+		var marker = new google.maps.Marker ( 
+            { 'position':		new google.maps.LatLng(...in_coords),
 				'map':			g_main_map,
-				'shadow':		in_shadow_icon,
+				'shadow':		g_icon_shadow,
 				'icon':			in_main_icon,
 				'shape':		g_icon_shape,
 				'clickable':	is_clickable,
@@ -164,49 +187,20 @@
 				'title':        in_title,
 				'draggable':    false
 		} );
-
+        marker.desc = in_html;
+		marker.zIndex = 999;
 		marker.old_image = marker.getIcon();
 
 		google.maps.event.addListener ( marker, "click", function () {
-			// for some reason, closeWhenOthersOpen doesn't work on Chrome....
-			g_allMarkers.forEach(function(marker)
-			{
-				if ( marker != this )
-				{
-					if ( marker.info_win_)
-					{
-						marker.info_win_.close();
-					};
-				};
-			});
-			if ( !marker.info_win_ )
-			{
-				if(marker.old_image){marker.setIcon(g_icon_image_selected)};
-				marker.setZIndex(google.maps.Marker.MAX_ZINDEX+1);
-				marker.info_win_ = new SnazzyInfoWindow({
-		 		        marker: marker,
-				        content: in_html,
-				        showCloseButton: false,
-				        closeWhenOthersOpen: true,
-						callbacks: {
-						    afterClose: function(){
-						            	if(marker.old_image){
-						            		marker.setIcon(marker.old_image);
-						            	};
-						            	marker.setZIndex(null);
-						            	//setTimeout(function(){ this.close(); }, 1000);
-						    }
-						},
-						edgeOffset: {
-						        	  top: 50,
-						        	  right: 5,
-						        	  bottom: 20,
-						        	  left: 5
-						        	}
-				});
-				marker.info_win_.open();
-			}
-		});
+            g_allMarkers.forEach((m) => m.marker.setIcon(m.marker.old_image));
+			if(marker.old_image){marker.setIcon(g_icon_image_selected)};
+			marker.setZIndex(google.maps.Marker.MAX_ZINDEX+1);
+            g_infoWindow.setContent(marker.desc);
+            g_infoWindow.open(g_main_map, marker);
+        });
+        g_infoWindow.addListener('closeclick', function () {
+            g_allMarkers.forEach((m) => m.marker.setIcon(m.marker.old_image));
+        });
 		g_allMarkers[g_allMarkers.length] = {ids: in_ids, marker: marker};
     };
     function addControl(div,pos) {
@@ -304,6 +298,8 @@
         this.zoomOut = zoomOut;
         this.fitBounds = fitBounds;
         this.openMarker = openMarker;
+        this.isApiLoaded = isApiLoaded;
+        this.loadApi = loadApi;
     }
     MapDelegate.prototype.createMap = null;
     MapDelegate.prototype.addListener = null;
@@ -319,3 +315,5 @@
     MapDelegate.prototype.invalidateSize = null;
     MapDelegate.prototype.zoomOut = null;
     MapDelegate.prototype.fitBounds = null;
+    MapDelegate.prototype.isApiLoaded = null;
+    MapDelegate.prototype.loadApi = null;

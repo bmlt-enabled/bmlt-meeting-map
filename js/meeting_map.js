@@ -14,12 +14,25 @@ function MeetingMap(in_config, in_div, in_coords, in_meeting_detail) {
 	var g_response_object = null;
 	var g_format_hash = null;
 	var g_crouton_filter = null;
-
+	var loadedCallbackFunction = null;
+	var loadedCallbackArgs = [];
+	function preloadApiLoadedCallback(f,a) {
+		loadedCallbackFunction = f;
+		loadedCallbackArgs = a;
+	}
+	function apiLoadedCallback() {
+		loadedCallbackFunction(...loadedCallbackArgs);
+	}
 	/************************************************************************************//**
 	 *	\brief Load the map and set it up.													*
 	 ****************************************************************************************/
 
 	function load_map(in_div, in_location_coords, handlebarMapOptions=null) {
+		if (!g_delegate.isApiLoaded()) {
+			preloadApiLoadedCallback(load_map, [in_div, in_location_coords]);
+			g_delegate.loadApi();
+			return;
+		}
 		if (handlebarMapOptions) {
 			in_location_coords = {latitude: handlebarMapOptions.lat, longitude: handlebarMapOptions.lng};
 		} else if (in_location_coords == null) {
@@ -47,6 +60,11 @@ function MeetingMap(in_config, in_div, in_coords, in_meeting_detail) {
 		};
 	};
 	function loadFromCrouton(in_div_id, meetings_response_object, formats_response_object, handlebarMapOptions = null) {
+		if (!g_delegate.isApiLoaded()) {
+			preloadApiLoadedCallback(loadFromCrouton, [in_div_id, meetings_response_object, formats_response_object, handlebarMapOptions]);
+			g_delegate.loadApi();
+			return;
+		}
 		in_div = document.getElementById(in_div_id);
 		load_map(in_div, in_coords, handlebarMapOptions);
 		meetings_response_object = meetings_response_object.filter(m => m.venue_type != venueType.VIRTUAL);
@@ -965,6 +983,7 @@ function MeetingMap(in_config, in_div, in_coords, in_meeting_detail) {
 	this.showMap = invalidateSize;
 	this.fillMap = filterFromCrouton;
 	this.rowClick = focusOnMeeting;
+	this.apiLoadedCallback = apiLoadedCallback;
 };
 MeetingMap.prototype.getMeetingsExt = null;
 MeetingMap.prototype.openTableViewExt = null;
@@ -972,6 +991,7 @@ MeetingMap.prototype.initialize = null;
 MeetingMap.prototype.showMap = null;
 MeetingMap.prototype.fillMap = null;
 MeetingMap.prototype.rowClick = null;
+MeetingMap.apiLoadedCallback = null;
 function exchange(id1, id2) {
 	var el = document.getElementById(id1);
 	el.classList.remove("active");

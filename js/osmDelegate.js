@@ -329,6 +329,7 @@ function addControl(div,pos) {
 		const bounds = locations.reduce(function(b,lat_lng) {b.extend(lat_lng); return b;}, L.latLngBounds());
 		g_main_map.fitBounds(bounds);
 	}
+	function returnTrue() {return true;}
     this.createMap = createMap;
     this.addListener = addListener;
     this.addControl = addControl;
@@ -344,6 +345,7 @@ function addControl(div,pos) {
 	this.zoomOut = zoomOut;
 	this.fitBounds = fitBounds;
 	this.openMarker = openMarker;
+	this.isApiLoaded = returnTrue;
 }
 MapDelegate.prototype.createMap = null;
 MapDelegate.prototype.addListener = null;
@@ -360,3 +362,4 @@ MapDelegate.prototype.invalidateSize = null;
 MapDelegate.prototype.zoomOut = null;
 MapDelegate.prototype.fitBounds = null;
 MapDelegate.prototype.openMarker = null;
+MapDelegate.prototype.isApiLoaded = null;
