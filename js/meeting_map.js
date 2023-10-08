@@ -698,6 +698,7 @@ function MeetingMap(inConfig, inDiv, inCoords, inMeetingDetail) {
 			return ret.filter((m) => gMeetingIdsFromCrouton.includes(m.id_bigint));
 		}
 		if (g_next24hours) {
+			const date = new Date();
 			var dayNow = date.getDay();
 			var hour = date.getHours();
 			var mins = date.getMinutes();
