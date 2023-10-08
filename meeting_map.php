@@ -22,17 +22,17 @@ if (!class_exists("BMLTMeetingMap")) {
             $this->getOptions();
             if (is_admin()) {
                 // Back end
-                add_action("admin_notices", array(&$this, "is_root_server_missing"));
-                add_action("admin_enqueue_scripts", array(&$this, "enqueue_backend_files"), 500);
-                add_action("admin_menu", array(&$this, "admin_menu_link"));
+                add_action("admin_notices", array(&$this, "isRootServerMissing"));
+                add_action("admin_enqueue_scripts", array(&$this, "enqueueBackendFiles"), 500);
+                add_action("admin_menu", array(&$this, "adminMenuLink"));
             } else {
                 // Front end
-                add_action("wp_enqueue_scripts", array(&$this, "enqueue_frontend_files_if_needed"));
-                add_action("crouton_map_enqueue_scripts", array(&$this, "enqueue_frontend_files"), 0);
-                add_filter("crouton_map_create_control", array(&$this, "create_meeting_map"), 10, 3);
+                add_action("wp_enqueue_scripts", array(&$this, "enqueueFrontendFilesIfNeeded"));
+                add_action("crouton_map_enqueue_scripts", array(&$this, "enqueueFrontendFiles"), 0);
+                add_filter("crouton_map_create_control", array(&$this, "createMeetingMap"), 10, 3);
                 add_shortcode('bmlt_meeting_map', array(
                     &$this,
-                    "meeting_map"
+                    "meetingMap"
                 ));
             }
         }
@@ -75,8 +75,7 @@ if (!class_exists("BMLTMeetingMap")) {
                     break;
             }
         }
-        // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-        public function has_shortcode()
+        public function hasShortcode()
         {
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
             $post_to_check = get_post(get_the_ID());
@@ -89,10 +88,8 @@ if (!class_exists("BMLTMeetingMap")) {
             }
             return false;
         }
-        // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-        public function is_root_server_missing()
+        public function isRootServerMissing()
         {
-            // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
             $root_server = $this->options['root_server'];
             if ($root_server == '') {
                 echo '<div id="message" class="error"><p>Missing BMLT Root Server in settings for BMLT Meeting Map.</p>';
@@ -102,16 +99,15 @@ if (!class_exists("BMLTMeetingMap")) {
             }
             add_action("admin_notices", array(
                 &$this,
-                "clear_admin_message"
+                "clearAdminMessage"
             ));
         }
-        // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-        public function clear_admin_message()
+        public function clearAdminMessage()
         {
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
             remove_action("admin_notices", array(
                 &$this,
-                "is_root_server_missing"
+                "isRootServerMissing"
             ));
         }
         public function BMLTMeetingMap()
@@ -121,8 +117,7 @@ if (!class_exists("BMLTMeetingMap")) {
         /**
          * @param $hook
          */
-        // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-        public function enqueue_backend_files($hook)
+        public function enqueueBackendFiles($hook)
         {
             wp_enqueue_script('jquery');
             wp_enqueue_script("admin", plugin_dir_url(__FILE__) . "js/admin.js", false, filemtime(plugin_dir_path(__FILE__) . "js/admin.js"), true);
@@ -130,16 +125,14 @@ if (!class_exists("BMLTMeetingMap")) {
         /**
          * @desc Adds JS/CSS to the header
          */
-        // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-        public function enqueue_frontend_files_if_needed()
+        public function enqueueFrontendFilesIfNeeded()
         {
-            // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-            if ($this->has_shortcode()) {
-                $this->enqueue_frontend_files();
+            if ($this->hasShortcode()) {
+                $this->enqueueFrontendFiles();
             }
         }
         // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-        public function enqueue_frontend_files()
+        public function enqueueFrontendFiles()
         {
             wp_enqueue_script("fetch-jsonp", plugin_dir_url(__FILE__) . "js/fetch-jsonp.js", false, filemtime(plugin_dir_path(__FILE__) . "js/fetch-jsonp.js"), false);
             if ($this->options['tile_provider'] == 'google') {
@@ -176,28 +169,25 @@ if (!class_exists("BMLTMeetingMap")) {
 			</script>';
             return $message;
         }
-        // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-        public function admin_menu_link()
+        public function adminMenuLink()
         {
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-            // If you change this from add_options_page, MAKE SURE you change the filter_plugin_actions function (below) to
+            // If you change this from add_options_page, MAKE SURE you change the filterPluginActions function (below) to
             // reflect the page file name (i.e. - options-general.php) of the page your plugin is under!
             add_options_page('BMLT Meeting Map', 'BMLT Meeting Map', 'activate_plugins', basename(__FILE__), array(
                 &$this,
-                'admin_options_page'
+                'adminOptionsPage'
             ));
             add_filter('plugin_action_links_' . plugin_basename(__FILE__), array(
                 &$this,
-                'filter_plugin_actions'
+                'filterPluginActions'
             ), 10, 2);
         }
         /**
          * Adds settings/options page
          */
-        // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-        public function admin_options_page()
+        public function adminOptionsPage()
         {
-            // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
             if (isset($_POST['bmltmapssave']) && boolval($_POST['bmltmapssave'])) {
                 if (!wp_verify_nonce($_POST['_wpnonce'], 'bmltmapupdate-options')) {
                     die('Whoops! There was a problem with the data you posted. Please go back and try again.');
@@ -225,7 +215,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 if (empty($this->options['nominatim_url'])) {
                     $this->options['nominatim_url'] = 'https://nominatim.openstreetmap.org/';
                 }
-                $this->save_admin_options();
+                $this->saveAdminOptions();
                 set_transient('admin_notice', 'Please put down your weapon. You have 20 seconds to comply.');
                 echo '<div class="updated"><p>Success! Your changes were successfully saved!</p></div>';
             }
@@ -388,8 +378,7 @@ if (!class_exists("BMLTMeetingMap")) {
         /**
          * @desc Adds the Settings link to the plugin activate/deactivate page
          */
-        // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-        public function filter_plugin_actions($links, $file)
+        public function filterPluginActions($links, $file)
         {
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
             // If your plugin is under a different top-level menu than Settings (IE - you changed the function above to something other than add_options_page)
@@ -454,15 +443,13 @@ if (!class_exists("BMLTMeetingMap")) {
         /**
          * Saves the admin options to the database.
          */
-        // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-        public function save_admin_options()
+        public function saveAdminOptions()
         {
             $this->options['root_server'] = untrailingslashit($this->options['root_server']);
             update_option($this->optionsName, $this->options);
             return;
         }
-        // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-        public function create_meeting_map($ret, $lang, $control)
+        public function createMeetingMap($ret, $lang, $control)
         {
             include(dirname(__FILE__)."/lang/translate_".$lang.".php");
             $lat = $this->options['lat'];
@@ -472,8 +459,7 @@ if (!class_exists("BMLTMeetingMap")) {
             $ret .= "{'latitude':$lat,'longitude':$lng,'zoom':$zoom},true);";
             return $ret;
         }
-        // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-        public function meeting_map($att)
+        public function meetingMap($att)
         {
             if (!isset($this->options['lat']) || trim($this->options['lat'])=='') {
                 $this->options['lat'] = 52.519575;
@@ -521,10 +507,9 @@ if (!class_exists("BMLTMeetingMap")) {
                 $meeting_details = ',true';
             }
             include(dirname(__FILE__)."/lang/translate_".$lang_enum.".php");
-            // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps		        
-              $the_new_content = $this->configure_javascript($translate, $query_string, $lang_enum);
+              $the_new_content = $this->configureJavascript($translate, $query_string, $lang_enum);
               ob_start();
-              echo $this->configure_javascript($translate, $query_string, $lang_enum);
+              echo $this->configureJavascript($translate, $query_string, $lang_enum);
             ?>
             <div class="bmlt_map_container_div"  id="bmlt_map_container" >
             <div dir="ltr" class="bmlt_search_map_div" id="bmlt_search_map_div">
@@ -620,10 +605,10 @@ if (!class_exists("BMLTMeetingMap")) {
             $ret .= 'menu_nearMe:"'.$this->hsc($translate['MENU_NEAR_ME']).'",';
             $ret .= 'menu_fullscreen:"'.$this->hsc($translate['MENU_FULLSCREEN']).'",';
             $ret .= 'menu_tooltip:"'.$this->hsc($translate['MENU_TOOLTIP']).'",';
-            //$ret .= 'BMLTPlugin_files_uri:\''.$this->hsc($this->get_plugin_path()).'?\',' . (defined('_DEBUG_MODE_') ? "\n" : '');
-            $ret .= "BMLTPlugin_images:'".$this->hsc($this->get_plugin_path()."/map_images")."'," . (defined('_DEBUG_MODE_') ? "\n" : '');
-            $ret .= "BMLTPlugin_lang_dir:'".$this->hsc($this->get_plugin_path()."/lang")."'," . (defined('_DEBUG_MODE_') ? "\n" : '');
-            $ret .= "BMLTPlugin_throbber_img_src:'".$this->hsc($this->get_plugin_path()."/map_images/Throbber.gif")."'," . (defined('_DEBUG_MODE_') ? "\n" : '');
+            //$ret .= 'BMLTPlugin_files_uri:\''.$this->hsc($this->getPluginPath()).'?\',' . (defined('_DEBUG_MODE_') ? "\n" : '');
+            $ret .= "BMLTPlugin_images:'".$this->hsc($this->getPluginPath()."/map_images")."'," . (defined('_DEBUG_MODE_') ? "\n" : '');
+            $ret .= "BMLTPlugin_lang_dir:'".$this->hsc($this->getPluginPath()."/lang")."'," . (defined('_DEBUG_MODE_') ? "\n" : '');
+            $ret .= "BMLTPlugin_throbber_img_src:'".$this->hsc($this->getPluginPath()."/map_images/Throbber.gif")."'," . (defined('_DEBUG_MODE_') ? "\n" : '');
             $ret .= 'map_link_text:"'.$this->hsc($translate['OPEN_GOOGLE']).'",';
             $ret .= 'hygene_header:"'.$this->hsc($translate['Hygene_Header']).'",';
             $ret .= 'hygene_button:"'.$this->hsc($translate['Hygene_Button']).'",';
@@ -654,8 +639,7 @@ if (!class_exists("BMLTMeetingMap")) {
          *                                                                                       *
          *   \returns A string. The XHTML to be displayed.                                       *
          ****************************************************************************************/
-		// phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-        public function configure_javascript($translate, $query_string, $lang_enum)
+        public function configureJavascript($translate, $query_string, $lang_enum)
         {
             $ret = '<style type="text/css">.onoffswitch-inner:before {
     content: "'.$translate["Next_24_hours"].'";
@@ -670,8 +654,7 @@ if (!class_exists("BMLTMeetingMap")) {
 }</style>';
             return $ret;
         }
-        // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps    
-        protected function get_plugin_path()
+        protected function getPluginPath()
         {
             // phpcs:enable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
             return plugin_dir_url(__FILE__);

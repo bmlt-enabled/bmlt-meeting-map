@@ -1,5 +1,4 @@
-function MapDelegate(in_config) {
-	const config = in_config;
+function MapDelegate(config) {
     var g_icon_image_single = L.icon({
 		iconUrl: config.BMLTPlugin_images+"/NAMarker.png",
 		shadowUrl: config.BMLTPlugin_images+"/NAMarkerS.png",
@@ -27,65 +26,63 @@ function MapDelegate(in_config) {
 		shadowAnchor: [12, 32],  // the same for the shadow
 		popupAnchor:  [12, -32] // point from which the popup should open relative to the iconAnchor
     });
-    var	g_allMarkers = [];				///< Holds all the markers.
-	var g_main_map;
-	var g_tileLayer;
-    function createMap(in_div, in_location_coords) {
-		if (! in_location_coords ) return null;
+    var	gAllMarkers = [];				///< Holds all the markers.
+	var gMainMap;
+	var gTileLayer;
+    function createMap(inDiv, inCenter) {
+		if (! inCenter ) return null;
 		myOptions = {
                 'minZoom': 6,
                 'maxZoom': 17,
 				'doubleClickZoom' : false,
 				'scrollWheelZoom' : false
 		};
-		if ( in_location_coords ) {
-			myOptions = Object.assign(myOptions, {
-				'center': new L.latLng ( in_location_coords.latitude, in_location_coords.longitude ),
-				'zoom': in_location_coords.zoom});
-		}
-		var	pixel_width = in_div.offsetWidth;
+		myOptions = Object.assign(myOptions, {
+				'center': new L.latLng ( inCenter.latitude, inCenter.longitude ),
+				'zoom': inCenter.zoom});
+		var	pixel_width = inDiv.offsetWidth;
 		if (pixel_width == 0) {
-			pixel_width = in_div.parentNode.offsetWidth;
+			pixel_width = inDiv.parentNode.offsetWidth;
 		}
-		var	pixel_height = in_div.offsetHeight;
+		var	pixel_height = inDiv.offsetHeight;
 		if (pixel_height == 0) {
 			pixel_height = pixel_width;
 		}
 		if (pixel_height > pixel_width*1.4) {
-			in_div.style.height = (pixel_width*1.6)+'px';
-			in_div.parentNode.style.height = in_div.style.height;
+			inDiv.style.height = (pixel_width*1.6)+'px';
+			inDiv.parentNode.style.height = inDiv.style.height;
 		}
-        g_main_map = new L.Map ( in_div, myOptions );
-        g_tileLayer = L.tileLayer(config.tileUrl,config.tileOptions).addTo(g_main_map);
-		g_main_map.zoomControl.setPosition('bottomright');
-		g_main_map.on('moveend',function() {
-			g_tileLayer.redraw();
+        gMainMap = new L.Map ( inDiv, myOptions );
+        gTileLayer = L.tileLayer(config.tileUrl,config.tileOptions).addTo(gMainMap);
+		gMainMap.zoomControl.setPosition('bottomright');
+		gMainMap.on('moveend',function() {
+			gTileLayer.redraw();
 		});
-        return g_main_map;
+        return gMainMap;
     }
     function addListener(ev,f,once) {
 		if (ev=='idle') {
 			ev = 'moveend';
 		}
         if (once) {
-			g_main_map.once(ev, f);
+			gMainMap.once(ev, f);
 		} else {
-			g_main_map.on(ev, f);
+			gMainMap.on(ev, f);
 		}
     }
     function setViewToPosition(position, filterMeetings, extra=null) {
         var latlng = L.latLng(position.latitude, position.longitude);
-		g_main_map.flyTo(latlng);
-        g_main_map.on('moveend', function(ev) {
-			g_main_map.off('moveend');
+		gMainMap.flyTo(latlng);
+        gMainMap.on('moveend', function(ev) {
+			gMainMap.off('moveend');
 			newZoom = getZoomAdjust(false, filterMeetings);
-			if (g_main_map.getZoom() != newZoom) {
-				g_main_map.setZoom(newZoom);
-				g_main_map.on('zoomend',function() {
-					g_main_map.off('zoomend'); 
-					g_main_map.invalidateSize();
+			if (gMainMap.getZoom() != newZoom) {
+				gMainMap.setZoom(newZoom);
+				gMainMap.on('zoomend',function() {
+					gMainMap.off('zoomend'); 
+					gMainMap.invalidateSize();
 					if (extra) {
-						g_main_map.on('load moveend', extra);
+						gMainMap.on('load moveend', extra);
 					}
 				});
 			} else {
@@ -97,23 +94,23 @@ function MapDelegate(in_config) {
 	}
 	function clearAllMarkers ( )
 	{
-		if ( g_allMarkers )
+		if ( gAllMarkers )
 		{
 
-			for ( var c = 0; c < g_allMarkers.length; c++ )
+			for ( var c = 0; c < gAllMarkers.length; c++ )
 			{
-				g_allMarkers[c].marker.remove( );
-				g_allMarkers[c] = null;
+				gAllMarkers[c].marker.remove( );
+				gAllMarkers[c] = null;
 			};
 
-			g_allMarkers.length = 0;
+			gAllMarkers.length = 0;
 		};
 	};
 	function getZoomAdjust(only_out,filterMeetings) {
-		if (!g_main_map) return 12;
-		var ret = g_main_map.getZoom();
-		var center = g_main_map.getCenter();
-		var bounds = g_main_map.getBounds();
+		if (!gMainMap) return 12;
+		var ret = gMainMap.getZoom();
+		var center = gMainMap.getCenter();
+		var bounds = gMainMap.getBounds();
 		var zoomedOut = false;
 		while(filterMeetings(bounds).length==0 && ret>6) {
 			zoomedOut = true;
@@ -149,15 +146,15 @@ function MapDelegate(in_config) {
 		return ret;
 	}
     function setZoom(filterMeetings, force=0) {
-		(force > 0) ? g_main_map.setZoom(force) : g_main_map.setZoom(getZoomAdjust(false,filterMeetings));
+		(force > 0) ? gMainMap.setZoom(force) : gMainMap.setZoom(getZoomAdjust(false,filterMeetings));
 	}
 	function zoomOut(filterMeetings) {
-        g_main_map.setZoom(getZoomAdjust(true,filterMeetings));
+        gMainMap.setZoom(getZoomAdjust(true,filterMeetings));
 	}
 	function fromLatLngToPoint(lat, lng) {
-		return g_main_map.latLngToLayerPoint(L.latLng(lat,lng));
+		return gMainMap.latLngToLayerPoint(L.latLng(lat,lng));
     };
-	function createMarker (	in_coords,		///< The long/lat for the marker.
+	function createMarker (	inCoords,		///< The long/lat for the marker.
         multi,	///< The URI for the main icon
         in_html,		///< The info window HTML
         in_title,        ///< The tooltip
@@ -172,11 +169,11 @@ function MapDelegate(in_config) {
 		jQuery("#meeting-data-row-" + id + " > td").addClass("rowHighlight");
 		crouton && crouton.dayTabFromId(id);
 	}
-    var marker = L.marker(in_coords, {icon: in_main_icon, title: in_title}).bindPopup(in_html).addTo(g_main_map);
+    var marker = L.marker(inCoords, {icon: in_main_icon, title: in_title}).bindPopup(in_html).addTo(gMainMap);
 	marker.on('popupopen', function(e) {
         marker.oldIcon = marker.getIcon();
 		marker.setIcon(g_icon_image_selected);
-		g_main_map.on('zoomstart',function(){
+		gMainMap.on('zoomstart',function(){
 			marker.closePopup();
 		});
 		jQuery("input[type=radio][name=panel]:checked").each(function(index, target) {
@@ -190,10 +187,10 @@ function MapDelegate(in_config) {
         marker.setIcon(marker.oldIcon);
 		jQuery(".bmlt-data-row > td").removeClass("rowHighlight");
     });
-    g_allMarkers[g_allMarkers.length] = {ids: in_ids, marker: marker};
+    gAllMarkers[gAllMarkers.length] = {ids: in_ids, marker: marker};
 }
 function openMarker(id) {
-	marker = g_allMarkers.find((m) => m.ids.includes(id));
+	marker = gAllMarkers.find((m) => m.ids.includes(id));
 	if (marker) {
 		 marker.marker.openPopup();
 		jQuery("#panel-"+id).prop('checked', true);
@@ -211,7 +208,7 @@ function addControl(div,pos) {
 		var controlConstructor = function(opts) {
 			return new ControlClass(opts);
 		}
-		controlConstructor({ position: pos }).addTo(g_main_map);
+		controlConstructor({ position: pos }).addTo(gMainMap);
     }
     	// Low level GeoCoding
 	function getJSON(url, params, callback) {
@@ -289,12 +286,12 @@ function addControl(div,pos) {
     };
  	function geoCallback ( in_geocode_response,	filterMeetings) {
         if ( in_geocode_response && in_geocode_response[0] && in_geocode_response[0].bbox ) {
-	        g_main_map.flyToBounds ( in_geocode_response[0].bbox );
-            g_main_map.on('moveend', function(ev) {
-				g_main_map.off('moveend');
-				g_main_map.setZoom(getZoomAdjust(true, filterMeetings));
-				g_main_map.on('moveend',function() {
-					g_tileLayer.redraw();
+	        gMainMap.flyToBounds ( in_geocode_response[0].bbox );
+            gMainMap.on('moveend', function(ev) {
+				gMainMap.off('moveend');
+				gMainMap.setZoom(getZoomAdjust(true, filterMeetings));
+				gMainMap.on('moveend',function() {
+					gTileLayer.redraw();
 				});
 			});
         } else {
@@ -320,14 +317,14 @@ function addControl(div,pos) {
 		return bounds.contains(L.latLng ( lat, lng ));
 	}
 	function getBounds() {
-		return g_main_map.getBounds();
+		return gMainMap.getBounds();
 	}
 	function invalidateSize() {
-		g_main_map.invalidateSize();
+		gMainMap.invalidateSize();
 	}
 	function fitBounds(locations) {
 		const bounds = locations.reduce(function(b,lat_lng) {b.extend(lat_lng); return b;}, L.latLngBounds());
-		g_main_map.fitBounds(bounds);
+		gMainMap.fitBounds(bounds);
 	}
 	function returnTrue() {return true;}
     this.createMap = createMap;

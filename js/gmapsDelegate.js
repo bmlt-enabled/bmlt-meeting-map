@@ -5,16 +5,16 @@
 	    var g_icon_image_selected = null;
 	    var g_icon_shadow = null;
 	    var g_icon_shape = null;
-        var g_main_map;
-        var g_infoWindow;
-        var g_isLoaded = false;
-        var	g_allMarkers = [];				///< Holds all the markers.
+        var gMainMap;
+        var gInfoWindow;
+        var gIsLoaded = false;
+        var	gAllMarkers = [];				///< Holds all the markers.
         function isApiLoaded() {
-            return g_isLoaded;
+            return gIsLoaded;
         }
         function loadApi(f, args) {
             var tag = document.createElement('script');
-            g_isLoaded = true;
+            gIsLoaded = true;
             if (typeof config['api_key'] === 'undefined') config['api_key'] = "";
             tag.src = "https://maps.googleapis.com/maps/api/js?key=" + config['api_key'] + "&callback=croutonMap.apiLoadedCallback";
             tag.defer = true;
@@ -22,14 +22,14 @@
             var firstScriptTag = document.getElementsByTagName('script')[0];
             firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
         };
-        function createMap(in_div, in_location_coords) {
+        function createMap(inDiv, inCenter) {
         g_icon_image_single = new google.maps.MarkerImage ( config.BMLTPlugin_images+"/NAMarker.png", new google.maps.Size(23, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
 	    g_icon_image_multi = new google.maps.MarkerImage ( config.BMLTPlugin_images+"/NAMarkerG.png", new google.maps.Size(23, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
 	    g_icon_image_selected = new google.maps.MarkerImage ( config.BMLTPlugin_images+"/NAMarkerSel.png", new google.maps.Size(23, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
 	    g_icon_shadow = new google.maps.MarkerImage( config.BMLTPlugin_images+"/NAMarkerS.png", new google.maps.Size(43, 32), new google.maps.Point(0,0), new google.maps.Point(12, 32) );
 	    g_icon_shape = { coord: [16,0,18,1,19,2,20,3,21,4,21,5,22,6,22,7,22,8,22,9,22,10,22,11,22,12,22,13,22,14,22,15,22,16,21,17,21,18,22,19,20,20,19,21,20,22,18,23,17,24,18,25,17,26,15,27,14,28,15,29,12,30,12,31,10,31,10,30,9,29,8,28,8,27,7,26,6,25,5,24,5,23,4,22,3,21,3,20,2,19,1,18,1,17,1,16,0,15,0,14,0,13,0,12,0,11,0,10,0,9,0,8,0,7,1,6,1,5,2,4,2,3,3,2,5,1,6,0,16,0], type: 'poly' };
 
-            if (! in_location_coords ) return null;
+            if (! inCenter ) return null;
             var myOptions = {
                 'mapTypeId': google.maps.MapTypeId.ROADMAP,
                 'zoomControl': true,
@@ -41,14 +41,12 @@
                 'scaleControl' : true,
                 'fullscreenControl': false,
             };
-            if ( in_location_coords ) {
-                myOptions = Object.assign(myOptions, {
-                    'center': new google.maps.LatLng ( in_location_coords.latitude, in_location_coords.longitude ),
-                    'zoom': in_location_coords.zoom
+            myOptions = Object.assign(myOptions, {
+                    'center': new google.maps.LatLng ( inCenter.latitude, inCenter.longitude ),
+                    'zoom': inCenter.zoom
                 });
-            }
-            var	pixel_width = in_div.offsetWidth;
-            var	pixel_height = in_div.offsetHeight;
+            var	pixel_width = inDiv.offsetWidth;
+            var	pixel_height = inDiv.offsetHeight;
             
             if ( (pixel_width < 640) || (pixel_height < 640) ) {
                 myOptions.scrollwheel = true;                    
@@ -56,10 +54,10 @@
             } else {
                 myOptions.zoomControlOptions = { 'style': google.maps.ZoomControlStyle.LARGE };
             };
-            g_infoWindow = new google.maps.InfoWindow();
-            g_main_map = new google.maps.Map ( in_div, myOptions );
+            gInfoWindow = new google.maps.InfoWindow();
+            gMainMap = new google.maps.Map ( inDiv, myOptions );
             
-            return g_main_map;
+            return gMainMap;
         }
         function addListener(ev,f,once) {
             var e = ev;
@@ -71,49 +69,40 @@
                     ;
             }
             if (once) {
-                google.maps.event.addListenerOnce( g_main_map, e, f);
+                google.maps.event.addListenerOnce( gMainMap, e, f);
             } else {
-                google.maps.event.addListener( g_main_map, e, f);
+                google.maps.event.addListener( gMainMap, e, f);
             }
         }
         function fitBounds(locations) {
-            google.maps.event.addListenerOnce(g_main_map, "bounds_changed", function () {
+            google.maps.event.addListenerOnce(gMainMap, "bounds_changed", function () {
                 this.setZoom(Math.min(this.getZoom(), 17));
             });
             const bounds = locations.reduce(
                 function (bounds, m) {
                     return bounds.extend(new google.maps.LatLng(m[0], m[1]));
                 }, new google.maps.LatLngBounds());
-            g_main_map.fitBounds(bounds);
+            gMainMap.fitBounds(bounds);
         }
         function setViewToPosition(position, filterMeetings, f) {
             var latlng = new google.maps.LatLng(position.latitude, position.longitude);
-            g_main_map.setCenter(latlng);
-            g_main_map.setZoom(getZoomAdjust(false, filterMeetings));
+            gMainMap.setCenter(latlng);
+            gMainMap.setZoom(getZoomAdjust(false, filterMeetings));
             f && f();
         }
-        function clearAllMarkers ( )
+        function clearAllMarkers ()
         {
-            if ( g_allMarkers )
-            {
-    
-                for ( var c = 0; c < g_allMarkers.length; c++ )
-                {
-                    if ( g_allMarkers[c] && g_allMarkers[c].marker.info_win ) {
-                        g_allMarkers[c].marker.info_win_.close();
-                    };
-                    g_allMarkers[c].marker.setMap( null );
-                    g_allMarkers[c] = null;
-                };
-    
-                g_allMarkers.length = 0;
-            };
+            gAllMarkers && gAllMarkers.forEach(function(m) {
+                m && m.marker.info_win && gAllMarkers[c].marker.info_win_.close();
+                m.marker.setMap( null );
+            });
+            gAllMarkers = [];
         };
         function getZoomAdjust(only_out,filterMeetings) {
-            if (!g_main_map) return 12;
-            var ret = g_main_map.getZoom();
-            var center = g_main_map.getCenter();
-            var bounds = g_main_map.getBounds();
+            if (!gMainMap) return 12;
+            var ret = gMainMap.getZoom();
+            var center = gMainMap.getCenter();
+            var bounds = gMainMap.getBounds();
             var zoomedOut = false;
             while(filterMeetings(bounds).length==0 && ret>6) {
                 zoomedOut = true;
@@ -148,51 +137,51 @@
             return ret;
         }
         function setZoom(filterMeetings, force=0) {
-            (force > 0) ? g_main_map.setZoom(force) : 
-            g_main_map.setZoom(getZoomAdjust(false,filterMeetings));
+            (force > 0) ? gMainMap.setZoom(force) : 
+            gMainMap.setZoom(getZoomAdjust(false,filterMeetings));
         }
         function zoomOut(filterMeetings) {
-            g_main_map.setZoom(getZoomAdjust(true,filterMeetings));
+            gMainMap.setZoom(getZoomAdjust(true,filterMeetings));
         }
         function contains(bounds, lat, lng) {
            return bounds.contains(new google.maps.LatLng ( lat, lng));
         }
         function getBounds() {
-            return g_main_map.getBounds();
+            return gMainMap.getBounds();
         }
         function fromLatLngToPoint(lat, lng) {
             var latLng = new google.maps.LatLng ( lat, lng);
-            var scale = 1 << g_main_map.getZoom();
-            var worldPoint = g_main_map.getProjection().fromLatLngToPoint(latLng);
+            var scale = 1 << gMainMap.getZoom();
+            var worldPoint = gMainMap.getProjection().fromLatLngToPoint(latLng);
             return new google.maps.Point(worldPoint.x * scale, worldPoint.y * scale);
         };
         function setZoom(filterMeetings) {
-            g_main_map.setZoom(getZoomAdjust(false,filterMeetings));
+            gMainMap.setZoom(getZoomAdjust(false,filterMeetings));
         }
-    function createMarker (	in_coords,		///< The long/lat for the marker.
+    function createMarker (	inCoords,		///< The long/lat for the marker.
 			multi, 
-			in_html,		///< The info window HTML
-			in_title,        ///< The tooltip
-            in_ids
+			inHtml,		///< The info window HTML
+			inTitle,        ///< The tooltip
+            inIds
 	)
 	{
         var in_main_icon = (multi ? g_icon_image_multi : g_icon_image_single)
 		var marker = null;
 
-		var	is_clickable = (in_html ? true : false);
+		var	is_clickable = (inHtml ? true : false);
 
 		var marker = new google.maps.Marker ( 
-            { 'position':		new google.maps.LatLng(...in_coords),
-				'map':			g_main_map,
+            { 'position':		new google.maps.LatLng(...inCoords),
+				'map':			gMainMap,
 				'shadow':		g_icon_shadow,
 				'icon':			in_main_icon,
 				'shape':		g_icon_shape,
 				'clickable':	is_clickable,
 				'cursor':		'default',
-				'title':        in_title,
+				'title':        inTitle,
 				'draggable':    false
 		} );
-        marker.desc = in_html;
+        marker.desc = inHtml;
 		marker.zIndex = 999;
 		marker.old_image = marker.getIcon();
         let highlightRow = function(target) {
@@ -202,11 +191,11 @@
             crouton && crouton.dayTabFromId(id);
         }
 		google.maps.event.addListener ( marker, "click", function () {
-            g_allMarkers.forEach((m) => m.marker.setIcon(m.marker.old_image));
+            gAllMarkers.forEach((m) => m.marker.setIcon(m.marker.old_image));
 			if(marker.old_image){marker.setIcon(g_icon_image_selected)};
 			marker.setZIndex(google.maps.Marker.MAX_ZINDEX+1);
-            g_infoWindow.setContent(marker.desc);
-            g_infoWindow.open(g_main_map, marker);
+            gInfoWindow.setContent(marker.desc);
+            gInfoWindow.open(gMainMap, marker);
             jQuery("input[type=radio][name=panel]:checked").each(function(index, target) {
                 highlightRow(target);
             });
@@ -214,11 +203,11 @@
                 highlightRow(this);
             });
         });
-        g_infoWindow.addListener('closeclick', function () {
-            g_allMarkers.forEach((m) => m.marker.setIcon(m.marker.old_image));
+        gInfoWindow.addListener('closeclick', function () {
+            gAllMarkers.forEach((m) => m.marker.setIcon(m.marker.old_image));
             jQuery(".bmlt-data-row > td").removeClass("rowHighlight");
         });
-		g_allMarkers[g_allMarkers.length] = {ids: in_ids, marker: marker};
+		gAllMarkers[gAllMarkers.length] = {ids: inIds, marker: marker};
     };
     function addControl(div,pos) {
         var p = pos;
@@ -231,17 +220,17 @@
                 break;
         }
 		div.index = 1;
-	    g_main_map.controls[p].push(div);
+	    gMainMap.controls[p].push(div);
     }
     	/************************************************************************************//**
 	 *	\brief This catches the AJAX response, and fills in the response form.				*
 	 ****************************************************************************************/
     function fitAndZoom(ev) {
-        g_main_map.fitBounds(this.response[0].geometry.viewport);
-        g_main_map.setZoom(getZoomAdjust(true,this.filterMeetings));
+        gMainMap.fitBounds(this.response[0].geometry.viewport);
+        gMainMap.setZoom(getZoomAdjust(true,this.filterMeetings));
     }
     function openMarker(id) {
-        marker = g_allMarkers.find((m) => m.ids.includes(id));
+        marker = gAllMarkers.find((m) => m.ids.includes(id));
         if (marker) {
             google.maps.event.trigger(marker.marker, 'click')
             jQuery("#panel-"+id).prop('checked', true);
@@ -251,8 +240,8 @@
         var callback = fitAndZoom.bind({filterMeetings:this.filterMeetings,
                 response: in_geocode_response});
         if ( in_geocode_response && in_geocode_response[0] && in_geocode_response[0].geometry && in_geocode_response[0].geometry.location ) {
-                g_main_map.panTo ( in_geocode_response[0].geometry.location );
-                google.maps.event.addListenerOnce( g_main_map, 'idle', callback);
+                gMainMap.panTo ( in_geocode_response[0].geometry.location );
+                google.maps.event.addListenerOnce( gMainMap, 'idle', callback);
         } else {
             alert ( config.address_lookup_fail );
         };
