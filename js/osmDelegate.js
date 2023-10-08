@@ -34,7 +34,7 @@ function MapDelegate(in_config) {
 		if (! in_location_coords ) return null;
 		myOptions = {
                 'minZoom': 6,
-                'maxZoom': 18,
+                'maxZoom': 17,
 				'doubleClickZoom' : false,
 				'scrollWheelZoom' : false
 		};
