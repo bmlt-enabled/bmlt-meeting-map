@@ -64,7 +64,6 @@ function MeetingMap(inConfig, inDiv, inCoords, inMeetingDetail) {
 		}
 		inDiv = document.getElementById(inDiv_id);
 		loadMap(handlebarMapOptions);
-		meetings_responseObject = meetings_responseObject.filter(m => m.venue_type != venueType.VIRTUAL);
 		loadAllMeetings(meetings_responseObject, formats_responseObject, 0, '', true);
 		const lat_lngs = meetings_responseObject.reduce(function(a,m) {a.push([m.latitude, m.longitude]); return a;},[]);
 		gDelegate.fitBounds(lat_lngs);
@@ -111,7 +110,7 @@ function MeetingMap(inConfig, inDiv, inCoords, inMeetingDetail) {
 		};
 	};
 	function loadAllMeetings(meetings_responseObject, formats_responseObject, centerMe, goto, fitAll=false) {
-		gAllMeetings = meetings_responseObject;
+		gAllMeetings = meetings_responseObject.filter(m => m.venue_type != venueType.VIRTUAL);
 		gFormatHash = createFormatHash(formats_responseObject);
 		searchResponseCallback();
 		if (centerMe != 0) {
@@ -151,7 +150,7 @@ function MeetingMap(inConfig, inDiv, inCoords, inMeetingDetail) {
 	}
 	function searchResponseCallback(expand = false) {
 		if (!gAllMeetings.length) {
-			alert(g_no_meetings_found);
+			alert(config.no_meetings_found);
 			return;
 		};
 		try {
