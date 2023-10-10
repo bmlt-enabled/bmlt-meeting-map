@@ -65,7 +65,7 @@ function MeetingMap(inConfig, inDiv, inCoords, inMeetingDetail) {
 		inDiv = document.getElementById(inDiv_id);
 		loadMap(handlebarMapOptions);
 		loadAllMeetings(meetings_responseObject, formats_responseObject, 0, '', true);
-		const lat_lngs = meetings_responseObject.reduce(function(a,m) {a.push([m.latitude, m.longitude]); return a;},[]);
+		const lat_lngs = gAllMeetings.reduce(function(a,m) {a.push([m.latitude, m.longitude]); return a;},[]);
 		gDelegate.fitBounds(lat_lngs);
 	};
 	function filterFromCrouton(filter) {
@@ -378,13 +378,18 @@ function MeetingMap(inConfig, inDiv, inCoords, inMeetingDetail) {
 		if (in_meeting_obj.location_info) {
 			ret += '<div class="marker_div_location_info">' + in_meeting_obj.location_info.toString() + '</div>';
 		};
-
-		ret += '<div class="marker_div_location_maplink"><a href="';
-		ret += 'https://www.google.com/maps/dir/?api=1&destination='
-			+ encodeURIComponent(in_meeting_obj.latitude.toString()) + ',' + encodeURIComponent(in_meeting_obj.longitude.toString());
-		ret += '" rel="external" target="_blank">' + config.map_link_text + '</a>';
-		ret += '</div>';
-
+		if (config.meeting_details_href.length) {
+			ret += '<div class="marker_div_location_maplink"><a href="';
+			ret += config.meeting_details_href + '?meeting-id=' + in_meeting_obj.id_bigint;
+			ret += '" target="_blank">' + config.more_info_text + '</a>';
+			ret += '</div>';
+		} else {
+			ret += '<div class="marker_div_location_maplink"><a href="';
+			ret += 'https://www.google.com/maps/dir/?api=1&destination='
+				+ encodeURIComponent(in_meeting_obj.latitude.toString()) + ',' + encodeURIComponent(in_meeting_obj.longitude.toString());
+			ret += '" rel="external" target="_blank">' + config.map_link_text + '</a>';
+			ret += '</div>';
+		}
 		if (regFormats.length > 0) {
 			ret += '<div class="marker_div_formats">';
 			regFormats.forEach(function(format) {

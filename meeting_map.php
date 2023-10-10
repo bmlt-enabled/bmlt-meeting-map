@@ -29,7 +29,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 // Front end
                 add_action("wp_enqueue_scripts", array(&$this, "enqueueFrontendFilesIfNeeded"));
                 add_action("crouton_map_enqueue_scripts", array(&$this, "enqueueFrontendFiles"), 0);
-                add_filter("crouton_map_create_control", array(&$this, "createMeetingMap"), 10, 3);
+                add_filter("crouton_map_create_control", array(&$this, "createMeetingMap"), 10, 4);
                 add_shortcode('bmlt_meeting_map', array(
                     &$this,
                     "meetingMap"
@@ -449,13 +449,13 @@ if (!class_exists("BMLTMeetingMap")) {
             update_option($this->optionsName, $this->options);
             return;
         }
-        public function createMeetingMap($ret, $lang, $control)
+        public function createMeetingMap($ret, $lang, $control, $detailsPage = '')
         {
             include(dirname(__FILE__)."/lang/translate_".$lang.".php");
             $lat = $this->options['lat'];
             $lng = $this->options['lng'];
             $zoom = $this->options['zoom'];
-            $ret = "$control = new MeetingMap( ".$this->createJavascriptConfig($translate, $this->options).", null,";
+            $ret = "$control = new MeetingMap( ".$this->createJavascriptConfig($translate, $this->options, $detailsPage).", null,";
             $ret .= "{'latitude':$lat,'longitude':$lng,'zoom':$zoom},true);";
             return $ret;
         }
@@ -589,7 +589,7 @@ if (!class_exists("BMLTMeetingMap")) {
         {
             return htmlspecialchars($field, ENT_COMPAT);
         }
-        private function createJavascriptConfig($translate, $options)
+        private function createJavascriptConfig($translate, $options, $detailsPage = null)
         {
             $this->enhanceTileProvider();
             $ret = '{';
@@ -609,6 +609,7 @@ if (!class_exists("BMLTMeetingMap")) {
             $ret .= "BMLTPlugin_images:'".$this->hsc($this->getPluginPath()."/map_images")."'," . (defined('_DEBUG_MODE_') ? "\n" : '');
             $ret .= "BMLTPlugin_lang_dir:'".$this->hsc($this->getPluginPath()."/lang")."'," . (defined('_DEBUG_MODE_') ? "\n" : '');
             $ret .= "BMLTPlugin_throbber_img_src:'".$this->hsc($this->getPluginPath()."/map_images/Throbber.gif")."'," . (defined('_DEBUG_MODE_') ? "\n" : '');
+            $ret .= 'more_info_text:"'.$this->hsc($translate['more_info']).'",';
             $ret .= 'map_link_text:"'.$this->hsc($translate['OPEN_GOOGLE']).'",';
             $ret .= 'hygene_header:"'.$this->hsc($translate['Hygene_Header']).'",';
             $ret .= 'hygene_button:"'.$this->hsc($translate['Hygene_Button']).'",';
@@ -629,9 +630,20 @@ if (!class_exists("BMLTMeetingMap")) {
             }
             $ret .= '},';
             $ret .= 'Meetings_on_Map:"'.$this->hsc($translate['Meetings_on_Map']).'",';
+            $ret .= 'meeting_details_href:"'.$this->getMeetingDetailsHref($detailsPage).'",';
             $ret .= 'start_week:2,';
             $ret .= '}';
             return $ret;
+        }
+        private function getMeetingDetailsHref($detailsPage)
+        {
+            if (!is_null($detailsPage)) {
+                return $detailsPage;
+            }
+            $croutonOptions = get_option('bmlt_tabs_options');
+            return $croutonOptions
+                ? (isset($croutonOptions['meeting_details_href']) ? $croutonOptions['meeting_details_href'] : '')
+                : '';
         }
         /************************************************************************************//**
          *   \brief  This returns the global JavaScript stuff for the new map search that only   *

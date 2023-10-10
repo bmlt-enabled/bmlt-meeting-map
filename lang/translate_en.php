@@ -6,6 +6,7 @@ $translate = array (
     'All_Meetings'                    =>  "All Meetings",
     'Next_24_hours'                   =>  'Next 24 Hours',
     'OPEN_GOOGLE'                     =>  'Open in Google Maps',
+    'more_info'                       =>  'Mehr dazu',
     'ADDRESS_LOOKUP_FAIL'             =>  "Could not find location",
     'NO_MEETINGS'                     =>  "No meetings match this query",
     'SERVER_ERROR'                     =>  "Server down or unreachable",
