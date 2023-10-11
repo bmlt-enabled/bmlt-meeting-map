@@ -110,7 +110,7 @@ function MeetingMap(inConfig, inDiv, inCoords, inMeetingDetail) {
 		};
 	};
 	function loadAllMeetings(meetings_responseObject, formats_responseObject, centerMe, goto, fitAll=false) {
-		gAllMeetings = meetings_responseObject.filter(m => m.venue_type != venueType.VIRTUAL);
+		gAllMeetings = meetings_responseObject.filter(m => m.venue_type != 2);
 		gFormatHash = createFormatHash(formats_responseObject);
 		searchResponseCallback();
 		if (centerMe != 0) {
