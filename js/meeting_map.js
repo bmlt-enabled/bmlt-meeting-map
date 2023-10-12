@@ -513,11 +513,13 @@ function MeetingMap(inConfig, inDiv, inCoords, inMeetingDetail) {
 		return controlDiv;
 	}
 	function focusOnMeeting(meetingId) {
-		meeting = gAllMeetings.find((meeting) => meeting.id_bigint == meetingId);
+		let meeting = gAllMeetings.find((meeting) => meeting.id_bigint == meetingId);
 		if (!meeting) return;
-		coords = {latitude: meeting.latitude, longitude: meeting.longitude};
-		gDelegate.setViewToPosition(coords, filterMeetingsAndBounds, function() {gDelegate.openMarker(meetingId);});
-		
+		if ((gDelegate.getZoom()>=14) && gDelegate.contains(gDelegate.getBounds(), meeting.latitude, meeting.longitude)) {
+			gDelegate.openMarker(meetingId);
+		} else {
+			gDelegate.setViewToPosition({latitude: meeting.latitude, longitude: meeting.longitude}, filterMeetingsAndBounds, function() {gDelegate.openMarker(meetingId);});
+		}
 	}
 	var g_suspendedFullscreen = false;
 	function closeModalWindow(modal) {

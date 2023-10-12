@@ -94,18 +94,12 @@ function MapDelegate(config) {
 	}
 	function clearAllMarkers ( )
 	{
-		if ( gAllMarkers )
-		{
-
-			for ( var c = 0; c < gAllMarkers.length; c++ )
-			{
-				gAllMarkers[c].marker.remove( );
-				gAllMarkers[c] = null;
-			};
-
-			gAllMarkers.length = 0;
-		};
+		gAllMarkers && gAllMarkers.forEach((m) => {m.marker.closePopup(); gMainMap.removeLayer(m.marker)});
+		gAllMarkers = [];
 	};
+	function getZoom() {
+		return gMainMap.getZoom();
+	}
 	function getZoomAdjust(only_out,filterMeetings) {
 		if (!gMainMap) return 12;
 		var ret = gMainMap.getZoom();
@@ -153,7 +147,7 @@ function MapDelegate(config) {
 	}
 	function fromLatLngToPoint(lat, lng) {
 		return gMainMap.latLngToLayerPoint(L.latLng(lat,lng));
-    };
+    }
 	function createMarker (	inCoords,		///< The long/lat for the marker.
         multi,	///< The URI for the main icon
         in_html,		///< The info window HTML
@@ -167,7 +161,7 @@ function MapDelegate(config) {
 		let id = target.id.split('-')[1];
 		jQuery(".bmlt-data-row > td").removeClass("rowHighlight");
 		jQuery("#meeting-data-row-" + id + " > td").addClass("rowHighlight");
-		crouton && crouton.dayTabFromId(id);
+		if (typeof crouton != 'undefined') crouton.dayTabFromId(id);
 	}
     var marker = L.marker(inCoords, {icon: in_main_icon, title: in_title}).bindPopup(in_html).addTo(gMainMap);
 	marker.on('popupopen', function(e) {
@@ -187,14 +181,16 @@ function MapDelegate(config) {
         marker.setIcon(marker.oldIcon);
 		jQuery(".bmlt-data-row > td").removeClass("rowHighlight");
     });
-    gAllMarkers[gAllMarkers.length] = {ids: in_ids, marker: marker};
+    gAllMarkers.push( {ids: in_ids, marker: marker} );
 }
 function openMarker(id) {
 	marker = gAllMarkers.find((m) => m.ids.includes(id));
 	if (marker) {
 		 marker.marker.openPopup();
-		jQuery("#panel-"+id).prop('checked', true);
+		 jQuery("#panel-"+id).prop('checked', true);
 	}
+	jQuery(".bmlt-data-row > td").removeClass("rowHighlight");
+	jQuery("#meeting-data-row-" + id + " > td").addClass("rowHighlight");
 }
 function addControl(div,pos) {
 		var ControlClass =  L.Control.extend({
@@ -335,6 +331,7 @@ function addControl(div,pos) {
     this.fromLatLngToPoint = fromLatLngToPoint;
     this.callGeocoder = callGeocoder;
 	this.setZoom = setZoom;
+	this.getZoom = getZoom;
 	this.createMarker = createMarker;
 	this.contains = contains;
 	this.getBounds = getBounds;
@@ -352,6 +349,7 @@ MapDelegate.prototype.clearAllMarkers = null;
 MapDelegate.prototype.fromLatLngToPoint = null;
 MapDelegate.prototype.callGeocoder = null;
 MapDelegate.prototype.setZoom = null;
+MapDelegate.prototype.getZoom = null;
 MapDelegate.prototype.createMarker = null;
 MapDelegate.prototype.contains = null;
 MapDelegate.prototype.getBounds = null;

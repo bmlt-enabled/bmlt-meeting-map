@@ -140,6 +140,9 @@
             (force > 0) ? gMainMap.setZoom(force) : 
             gMainMap.setZoom(getZoomAdjust(false,filterMeetings));
         }
+        function getZoom() {
+            gMainMap.getZoom();
+        }
         function zoomOut(filterMeetings) {
             gMainMap.setZoom(getZoomAdjust(true,filterMeetings));
         }
@@ -188,7 +191,7 @@
             let id = target.id.split('-')[1];
             jQuery(".bmlt-data-row > td").removeClass("rowHighlight");
             jQuery("#meeting-data-row-" + id + " > td").addClass("rowHighlight");
-            crouton && crouton.dayTabFromId(id);
+            if (typeof crouton == 'undefined') crouton.dayTabFromId(id);
         }
 		google.maps.event.addListener ( marker, "click", function () {
             gAllMarkers.forEach((m) => m.marker.setIcon(m.marker.old_image));
@@ -234,6 +237,8 @@
         if (marker) {
             google.maps.event.trigger(marker.marker, 'click')
             jQuery("#panel-"+id).prop('checked', true);
+            jQuery(".bmlt-data-row > td").removeClass("rowHighlight");
+            jQuery("#meeting-data-row-" + id + " > td").addClass("rowHighlight");
         }
     }
     function geoCallback( in_geocode_response ) {
@@ -301,6 +306,7 @@
         this.fromLatLngToPoint = fromLatLngToPoint;
         this.callGeocoder = callGeocoder;
         this.setZoom = setZoom;
+        this.getZoom = getZoom;
         this.createMarker = createMarker;
         this.contains = contains;
         this.getBounds = getBounds;
@@ -319,6 +325,7 @@
     MapDelegate.prototype.fromLatLngToPoint = null;
     MapDelegate.prototype.callGeocoder = null;
     MapDelegate.prototype.setZoom = null;
+    MapDelegate.prototype.getZoom = null;
     MapDelegate.prototype.createMarker = null;
     MapDelegate.prototype.contains = null;
     MapDelegate.prototype.getBounds = null;
