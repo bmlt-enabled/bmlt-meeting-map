@@ -632,6 +632,7 @@ if (!class_exists("BMLTMeetingMap")) {
             $ret .= 'Meetings_on_Map:"'.$this->hsc($translate['Meetings_on_Map']).'",';
             $ret .= 'meeting_details_href:"'.$this->getMeetingDetailsHref($detailsPage).'",';
             $ret .= 'start_week:2,';
+            $ret .= 'api_key:"'.$this->options['api_key'].'",';
             $ret .= '}';
             return $ret;
         }
