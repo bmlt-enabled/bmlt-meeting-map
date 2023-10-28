@@ -950,7 +950,10 @@ function MeetingMap(inConfig, inDiv, inCoords, inMeetingDetail) {
 		}
 		gDelegate.invalidateSize();
 	}
+	var _firstShow = true;
 	function showMap() {
+		if (!_firstShow) return;
+		//_firstShow = false;
 		gDelegate.invalidateSize();
 		gDelegate.fitBounds(
 			((gMeetingIdsFromCrouton) ? gAllMeetings.filter((m) => gMeetingIdsFromCrouton.includes(m.id_bigint)) : gAllMeetings)

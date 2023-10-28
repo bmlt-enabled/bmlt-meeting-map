@@ -177,8 +177,9 @@ div.bmlt_map_container_div div.bmlt_search_map_div
   border:0;
 }  
 input[name='panel']:checked ~ .marker_div_meeting {
-  height: 170px !important;
+  height:auto;
   overflow: auto !important;
+  padding-bottom:1em;
 }
 
 .onoffswitch {
