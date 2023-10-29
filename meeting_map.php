@@ -487,7 +487,8 @@ if (!class_exists("BMLTMeetingMap")) {
                 'lang_enum' => $this->options['lang'],
                 'query_string' => '',
                 'center_me' => 0,
-                'goto' => ''
+                'goto' => '',
+                'details_page' => null
             ), $att, 'bmlt_meeting_map'));
             $gotomeTmp = isset($_GET['gotoMe']) ? sanitize_text_field($_GET['gotoMe']) : '';
             if ($gotomeTmp!='' && $gotomeTmp!='0') {
@@ -515,7 +516,7 @@ if (!class_exists("BMLTMeetingMap")) {
             <div dir="ltr" class="bmlt_search_map_div" id="bmlt_search_map_div">
             <script type="text/javascript">
                 document.getElementById("bmlt_map_container").style.display='block';
-                croutonMap = new MeetingMap( <?php echo $this->createJavascriptConfig($translate, $this->options)?>, document.getElementById('bmlt_search_map_div'), 
+                croutonMap = new MeetingMap( <?php echo $this->createJavascriptConfig($translate, $this->options, $details_page)?>, document.getElementById('bmlt_search_map_div'), 
                     {'latitude':<?php echo $lat;?>,'longitude':<?php echo $lng;?>,'zoom':<?php echo $zoom;?>}<?php echo $meeting_details; ?>);
             </script>
             </div>
