@@ -3,7 +3,7 @@
 Plugin Name: BMLT Meeting Map
 Description: Simple responsive Meeting Map.
 Author: BmltEnabled
-Version: 2.6.0
+Version: 2.6.1
 */
 /* Disallow direct access to the plugin file */
 if (basename($_SERVER['PHP_SELF']) == basename(__FILE__)) {
@@ -93,7 +93,7 @@ if (!class_exists("BMLTMeetingMap")) {
             $root_server = $this->options['root_server'];
             if ($root_server == '') {
                 echo '<div id="message" class="error"><p>Missing BMLT Root Server in settings for BMLT Meeting Map.</p>';
-                $url = admin_url('options-general.php?page=bmlt_meeting_map.php');
+                $url = admin_url('options-general.php?page=meeting_map.php');
                 echo "<p><a href='$url'>BMLT_Meeting_Map Settings</a></p>";
                 echo '</div>';
             }
@@ -451,6 +451,7 @@ if (!class_exists("BMLTMeetingMap")) {
         }
         public function createMeetingMap($ret, $lang, $control, $detailsPage = '')
         {
+            $lang = sanitize_file_name($lang);
             include(dirname(__FILE__)."/lang/translate_".$lang.".php");
             $lat = $this->options['lat'];
             $lng = $this->options['lng'];
@@ -507,6 +508,7 @@ if (!class_exists("BMLTMeetingMap")) {
                 $center_me = 0;
                 $meeting_details = ',true';
             }
+            $lang_enum = sanitize_file_name($lang);
             include(dirname(__FILE__)."/lang/translate_".$lang_enum.".php");
               $the_new_content = $this->configureJavascript($translate, $query_string, $lang_enum);
               ob_start();
